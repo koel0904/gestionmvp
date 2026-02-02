@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Sun, Moon, Globe } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useLang } from "../context/LangContext";
@@ -8,37 +8,20 @@ import { useLang } from "../context/LangContext";
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [visible, setVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const location = useLocation();
 
   const { theme, toggleTheme } = useTheme();
   const { lang, toggleLang, t } = useLang();
 
-  // Handle scroll behavior (glass effect + hide/show)
+  // Handle scroll for blur effect
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      // Glass effect trigger
-      if (currentScrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-
-      // Hide/Show logic
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setVisible(false); // Scrolling down
-      } else {
-        setVisible(true); // Scrolling up
-      }
-
-      setLastScrollY(currentScrollY);
+      setScrolled(window.scrollY > 20);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   const navLinks = [
     { name: t.nav.home, href: "/" },
@@ -48,91 +31,126 @@ const Navbar = () => {
   ];
 
   return (
-    <motion.nav
-      initial={{ y: 0 }}
-      animate={{ y: visible ? 0 : -100 }}
-      transition={{ duration: 0.3 }}
+    <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "glass py-4" : "bg-transparent py-6"
+        scrolled ? "glass-subtle shadow-sm" : "bg-[var(--bg-primary)]"
       }`}
+      style={{ height: "52px" }}
     >
-      <div className="container flex items-center justify-between">
+      <div className="container h-full flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="text-2xl font-bold tracking-tighter">
+        <Link
+          to="/"
+          className="text-xl font-semibold tracking-tight flex items-center gap-1"
+        >
           Gestion<span className="text-[var(--accent-color)]">App</span>
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.href}
-              className="text-sm font-medium hover:text-[var(--accent-color)] transition-colors"
-            >
-              {link.name}
-            </Link>
-          ))}
+        <div className="hidden md:flex items-center gap-1">
+          {navLinks.map((link) => {
+            const isActive = location.pathname === link.href;
+            return (
+              <Link
+                key={link.name}
+                to={link.href}
+                className={`relative px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  isActive
+                    ? "text-[var(--text-primary)]"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                {link.name}
+                {isActive && (
+                  <motion.div
+                    layoutId="navbar-indicator"
+                    className="absolute bottom-0 left-2 right-2 h-0.5 bg-[var(--accent-color)] rounded-full"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </div>
 
-          <div className="flex items-center gap-4 ml-4 pl-4 border-l border-[var(--text-secondary)]">
-            <button
-              onClick={toggleTheme}
-              className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors"
-              aria-label="Toggle Theme"
-            >
-              {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+        {/* Right Controls */}
+        <div className="hidden md:flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="p-2 hover:bg-[var(--bg-secondary)] rounded-lg transition-colors"
+            aria-label="Toggle Theme"
+          >
+            {theme === "dark" ? (
+              <Sun size={18} className="text-[var(--text-secondary)]" />
+            ) : (
+              <Moon size={18} className="text-[var(--text-secondary)]" />
+            )}
+          </button>
 
-            <button
-              onClick={toggleLang}
-              className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors font-mono text-sm uppercase flex items-center gap-1"
-              aria-label="Toggle Language"
-            >
-              <Globe size={18} />
-              {lang}
-            </button>
-          </div>
+          <button
+            onClick={toggleLang}
+            className="px-3 py-1.5 hover:bg-[var(--bg-secondary)] rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)]"
+            aria-label="Toggle Language"
+          >
+            <Globe size={16} />
+            <span className="uppercase">{lang}</span>
+          </button>
         </div>
 
         {/* Mobile Menu Button */}
-        <button className="md:hidden p-2" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+        <button
+          className="md:hidden p-2 hover:bg-[var(--bg-secondary)] rounded-lg transition-colors"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? (
+            <X size={22} className="text-[var(--text-primary)]" />
+          ) : (
+            <Menu size={22} className="text-[var(--text-primary)]" />
+          )}
         </button>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden glass border-t border-[var(--glass-border)] absolute w-full top-full left-0"
+            className="md:hidden glass-subtle border-t border-[var(--border-subtle)] absolute w-full top-full left-0"
           >
-            <div className="flex flex-col p-6 gap-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.href}
-                  className="text-lg font-medium"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-[var(--glass-border)]">
+            <div className="container flex flex-col py-4 gap-1">
+              {navLinks.map((link) => {
+                const isActive = location.pathname === link.href;
+                return (
+                  <Link
+                    key={link.name}
+                    to={link.href}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? "text-[var(--text-primary)] bg-[var(--bg-secondary)]"
+                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]"
+                    }`}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
+
+              <div className="flex items-center justify-between mt-2 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   onClick={toggleTheme}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 >
-                  {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-                  <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                  {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+                  <span>{theme === "dark" ? "Light" : "Dark"}</span>
                 </button>
                 <button
                   onClick={toggleLang}
-                  className="flex items-center gap-2 uppercase font-mono"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] uppercase"
                 >
-                  <Globe size={20} />
+                  <Globe size={18} />
                   <span>{lang}</span>
                 </button>
               </div>
@@ -140,7 +158,7 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </nav>
   );
 };
 

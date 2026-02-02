@@ -6,73 +6,79 @@ const Pricing = () => {
   const { t } = useLang();
 
   return (
-    <section id="pricing" className="section relative">
-      {/* Background Decoration */}
-      <div className="absolute top-[30%] left-[50%] transform -translate-x-1/2 w-full h-[600px] bg-gradient-to-b from-[var(--bg-secondary)] to-transparent -z-10"></div>
-
+    <section className="section">
       <div className="container">
-        <div className="text-center mb-16">
+        {/* Header */}
+        <div className="text-center mb-20 max-w-3xl mx-auto">
           <motion.h2
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="text-4xl font-bold mb-4"
+            className="mb-4"
           >
             {t.pricing.title}
           </motion.h2>
-          <p className="text-[var(--text-secondary)] text-xl">
-            {t.pricing.subtitle}
-          </p>
+          <p className="text-xl">{t.pricing.subtitle}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+        {/* Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto items-start">
           {t.pricing.plans.map((plan, index) => (
             <motion.div
               key={plan.name}
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className={`glass rounded-2xl p-8 relative flex flex-col h-full ${
-                plan.recommended
-                  ? "border-[var(--accent-color)] shadow-2xl scale-105 z-10"
-                  : "border-[var(--glass-border)]"
+              className={`card relative flex flex-col h-full ${
+                plan.recommended ? "ring-2 ring-[var(--accent-color)]" : ""
               }`}
             >
+              {/* Recommended Badge */}
               {plan.recommended && (
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[var(--accent-color)] text-white px-4 py-1 rounded-full text-sm font-bold">
-                  Recommended
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <div className="px-4 py-1 bg-[var(--accent-color)] text-white text-xs font-semibold rounded-full">
+                    Recommended
+                  </div>
                 </div>
               )}
 
-              <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-              <div className="text-4xl font-extrabold mb-6">
-                {plan.price}
-                <span className="text-lg text-[var(--text-secondary)] font-normal">
+              {/* Plan Name */}
+              <h3 className="text-2xl font-bold mb-1 pt-2">{plan.name}</h3>
+
+              {/* Price */}
+              <div className="mb-6">
+                <span className="text-5xl font-bold">{plan.price}</span>
+                <span className="text-[var(--text-secondary)] text-lg">
                   /mo
                 </span>
               </div>
 
-              <ul className="flex-1 space-y-4 mb-8">
+              {/* Features List */}
+              <ul className="flex-1 space-y-3 mb-8">
                 {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-center gap-3">
-                    <div
-                      className={`p-1 rounded-full ${plan.recommended ? "bg-[var(--accent-color)] text-white" : "bg-[var(--bg-secondary)]"}`}
-                    >
-                      <Check size={14} />
+                  <li key={idx} className="flex items-start gap-3">
+                    <div className="mt-0.5">
+                      <Check
+                        size={18}
+                        className={
+                          plan.recommended
+                            ? "text-[var(--accent-color)]"
+                            : "text-[var(--text-secondary)]"
+                        }
+                      />
                     </div>
-                    <span className="text-[var(--text-secondary)]">
+                    <span className="text-[var(--text-secondary)] text-sm leading-relaxed">
                       {feature}
                     </span>
                   </li>
                 ))}
               </ul>
 
+              {/* CTA Button */}
               <button
-                className={`w-full py-3 rounded-xl font-bold transition-all ${
-                  plan.recommended
-                    ? "bg-[var(--accent-color)] text-white hover:bg-[var(--accent-hover)] shadow-lg hover:shadow-orange-500/30"
-                    : "bg-[var(--bg-secondary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)]"
+                className={`w-full btn ${
+                  plan.recommended ? "btn-primary" : "btn-outline"
                 }`}
               >
                 {t.pricing.subscribe}
