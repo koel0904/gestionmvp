@@ -1,0 +1,12 @@
+/* Minimal App.css for GestionApp */
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Ensure smooth transitions globally */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
