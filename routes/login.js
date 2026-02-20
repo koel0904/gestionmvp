@@ -2,7 +2,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import userRepository from "../repositories/user.js";
-import { send2FACode } from "../repositories/mail.js";
+import MailRepository from "../repositories/mail.js";
 
 const SECRET = process.env.SECRET;
 const router = express.Router();
@@ -18,7 +18,7 @@ router.post("/login", async (req, res) => {
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     await userRepository.afSetCode(email, code);
-    await send2FACode(email, code);
+    await MailRepository.send2FACode(email, code);
 
     res.json({ message: "2FA code sent to email" }).status(200);
   } catch {
