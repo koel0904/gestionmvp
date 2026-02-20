@@ -44,7 +44,7 @@ router.post("/login/2fa", async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user.id }, SECRET, {
-      expiresIn: "72h",
+      expiresIn: "132h",
     });
 
     res.cookie("token", token, {
