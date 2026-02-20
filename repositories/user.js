@@ -26,8 +26,8 @@ class userRepository {
     const saltRounds = parseInt(process.env.SALT) || 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create a default business for this user
-    const business = await prisma.business.create({
+    // Create a default local (business) for this user
+    const local = await prisma.local.create({
       data: { name: `${name}'s Business` },
     });
 
@@ -37,7 +37,7 @@ class userRepository {
         email,
         password: hashedPassword,
         role: "master",
-        businessId: business.id,
+        localId: local.id,
       },
     });
 

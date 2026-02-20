@@ -14,10 +14,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Business {
-  id    Int    @id @default(autoincrement())
-  name  String
-  users User[]
+model Local {
+  id      Int    @id @default(autoincrement())
+  name    String
+  address String?
+  phone   String?
+  email   String?
+
+  users       User[]
+  proveedores Proveedores[]
+  inventario  Inventario[]
+  ventas      Ventas[]
+  clientes    Clientes[]
 }
 
 model User {
@@ -29,10 +37,67 @@ model User {
   role        String   @default("user")
   permissions Json     @default("[]")
 
-  business    Business @relation(fields: [businessId], references: [id])
-  businessId  Int
+  local    Local @relation(fields: [localId], references: [id])
+  localId  Int
 
   master      User?    @relation("MasterSubusers", fields: [masterId], references: [id])
   masterId    Int?     @unique
   subusers    User[]   @relation("MasterSubusers")
+}
+
+model Proveedores {
+  id      Int     @id @default(autoincrement())
+  name    String
+  email   String  @unique
+  phone   String?
+  
+  local   Local   @relation(fields: [localId], references: [id])
+  localId Int
+
+  inventario Inventario[]
+}
+
+model Inventario {
+  id            Int     @id @default(autoincrement())
+  name          String
+  precio_compra Float
+  precio_venta  Float
+  stock         Int
+  
+  proveedor   Proveedores @relation(fields: [proveedorId], references: [id])
+  proveedorId Int
+  
+  local   Local   @relation(fields: [localId], references: [id])
+  localId Int
+
+  ventas Ventas[]
+}
+
+model Clientes {
+  id    Int     @id @default(autoincrement())
+  name  String
+  email String  @unique
+  phone String?
+
+  local   Local   @relation(fields: [localId], references: [id])
+  localId Int
+
+  ventas Ventas[]
+}
+
+model Ventas {
+  id           Int      @id @default(autoincrement())
+  cantidad     Int
+  precio_venta Float
+  total        Float
+  fecha        DateTime @default(now())
+  
+  cliente   Clientes @relation(fields: [clienteId], references: [id])
+  clienteId Int
+  
+  inventario   Inventario @relation(fields: [inventarioId], references: [id])
+  inventarioId Int
+
+  local   Local   @relation(fields: [localId], references: [id])
+  localId Int
 }

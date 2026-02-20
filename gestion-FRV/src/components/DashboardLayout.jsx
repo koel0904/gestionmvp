@@ -19,28 +19,28 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-background-dark font-display text-white flex relative overflow-hidden">
+    <div className="h-screen bg-background-dark font-display text-white flex p-4 gap-4 relative overflow-hidden">
       {/* ── Ambient Background Orbs ── */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute w-[900px] h-[900px] -top-[250px] -left-[150px] rounded-full bg-[radial-gradient(circle,rgba(168,85,247,0.22)_0%,transparent_55%)] blur-[100px]" />
-        <div className="absolute w-[700px] h-[700px] bottom-[-200px] right-[-100px] rounded-full bg-[radial-gradient(circle,rgba(244,140,37,0.18)_0%,transparent_55%)] blur-[100px]" />
-        <div className="absolute w-[500px] h-[500px] top-[40%] left-[50%] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(192,80,200,0.1)_0%,transparent_60%)] blur-[80px]" />
+        <div className="absolute w-[900px] h-[900px] -top-[250px] -left-[150px] rounded-full bg-[radial-gradient(circle,rgba(168,85,247,0.15)_0%,transparent_55%)] blur-[100px]" />
+        <div className="absolute w-[700px] h-[700px] bottom-[-200px] right-[-100px] rounded-full bg-[radial-gradient(circle,rgba(244,140,37,0.12)_0%,transparent_55%)] blur-[100px]" />
+        <div className="absolute w-[500px] h-[500px] top-[40%] left-[50%] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(192,80,200,0.08)_0%,transparent_60%)] blur-[80px]" />
       </div>
 
       {/* ══════════════════════════════════════ */}
       {/* SIDEBAR                              */}
       {/* ══════════════════════════════════════ */}
       <aside
-        className={`fixed top-0 left-0 h-full z-40 flex flex-col transition-all duration-300 ease-in-out ${
-          sidebarOpen ? "w-[272px]" : "w-[80px]"
+        className={`relative z-40 flex flex-col shrink-0 transition-all duration-300 ease-in-out h-full ${
+          sidebarOpen ? "w-[260px]" : "w-[80px]"
         }`}
       >
-        <div className="flex flex-col h-full m-3 mr-0 rounded-2xl overflow-hidden glass-heavy relative">
+        <div className="flex flex-col h-full rounded-2xl overflow-hidden glass-heavy shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative">
           {/* Top accent line */}
           <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-accent-violet via-primary to-accent-violet opacity-60" />
 
           {/* Logo */}
-          <div className="flex items-center gap-3 px-5 py-6 border-b border-white/[0.06]">
+          <div className="flex items-center gap-3 px-5 py-6 border-b border-white/[0.04]">
             <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-accent-violet to-primary text-white shadow-lg shadow-accent-violet/30 shrink-0 glow-purple">
               <span className="material-symbols-outlined text-[20px]">
                 business_center
@@ -54,7 +54,7 @@ export default function DashboardLayout() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 py-4 px-3 space-y-1.5">
+          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
             {sidebarLinks.map((link) => {
               const isActive = location.pathname === link.path;
               return (
@@ -63,18 +63,18 @@ export default function DashboardLayout() {
                   to={link.path}
                   className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden ${
                     isActive
-                      ? "glass-button-primary text-white glow-purple"
-                      : "text-white/60 hover:text-white hover:bg-white/[0.04]"
+                      ? "bg-white/[0.08] text-white shadow-lg border border-white/10"
+                      : "text-white/60 hover:text-white hover:bg-white/[0.04] border border-transparent"
                   }`}
                 >
                   {isActive && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-accent-violet/10 to-primary/5 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-accent-violet/20 to-primary/10 pointer-events-none" />
                   )}
                   <span
                     className={`material-symbols-outlined text-[20px] shrink-0 relative z-10 ${
                       isActive
                         ? "text-accent-purple-light"
-                        : "text-white/50 group-hover:text-accent-violet/70"
+                        : "text-white/40 group-hover:text-accent-violet/70"
                     }`}
                   >
                     {link.icon}
@@ -90,8 +90,8 @@ export default function DashboardLayout() {
           </nav>
 
           {/* User Section */}
-          <div className="border-t border-white/[0.06] p-4">
-            <div className="glass-subtle rounded-xl p-3 flex items-center gap-3">
+          <div className="border-t border-white/[0.04] p-4">
+            <div className="glass-subtle rounded-xl p-3 flex items-center gap-3 border border-white/[0.05]">
               <div className="size-10 rounded-xl bg-gradient-to-br from-accent-violet/40 to-primary/30 border border-accent-violet/20 flex items-center justify-center text-white/90 shrink-0 glow-purple">
                 <span className="material-symbols-outlined text-[18px]">
                   person
@@ -115,57 +115,55 @@ export default function DashboardLayout() {
       {/* ══════════════════════════════════════ */}
       {/* MAIN CONTENT AREA                     */}
       {/* ══════════════════════════════════════ */}
-      <div
-        className={`flex-1 flex flex-col transition-all duration-300 relative z-10 ${
-          sidebarOpen ? "ml-[272px]" : "ml-[80px]"
-        }`}
-      >
+      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 relative z-10 gap-4 h-full">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 px-5 pt-3">
-          <div className="flex items-center justify-between glass-heavy rounded-2xl px-5 py-3">
+        <header className="z-30 shrink-0">
+          <div className="flex items-center justify-between glass-heavy rounded-2xl px-5 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="size-9 rounded-xl glass-button flex items-center justify-center text-white/70 hover:text-accent-purple-light cursor-pointer"
+                className="size-9 rounded-xl glass-button flex items-center justify-center text-white/70 hover:text-white cursor-pointer hover:shadow-[0_0_15px_rgba(139,92,246,0.2)]"
               >
                 <span className="material-symbols-outlined text-[20px]">
                   {sidebarOpen ? "menu_open" : "menu"}
                 </span>
               </button>
-              <div className="h-5 w-px bg-accent-violet/20" />
-              <h1 className="text-sm font-bold text-white/80 tracking-wide uppercase">
+              <div className="h-5 w-px bg-white/10" />
+              <h1 className="text-sm font-bold text-white/90 tracking-wide uppercase">
                 {sidebarLinks.find((l) => l.path === location.pathname)?.name ||
                   "Dashboard"}
               </h1>
             </div>
             <div className="flex items-center gap-2">
-              <button className="size-9 rounded-xl glass-button flex items-center justify-center text-white/60 hover:text-primary cursor-pointer">
+              <button className="size-9 rounded-xl glass-button flex items-center justify-center text-white/60 hover:text-white cursor-pointer hover:shadow-[0_0_15px_rgba(139,92,246,0.2)]">
                 <span className="material-symbols-outlined text-[20px]">
                   notifications
                 </span>
               </button>
-              <button className="size-9 rounded-xl glass-button flex items-center justify-center text-white/60 hover:text-accent-purple-light cursor-pointer">
+              <button className="size-9 rounded-xl glass-button flex items-center justify-center text-white/60 hover:text-white cursor-pointer hover:shadow-[0_0_15px_rgba(139,92,246,0.2)]">
                 <span className="material-symbols-outlined text-[20px]">
                   search
                 </span>
               </button>
-              <div className="h-5 w-px bg-accent-violet/20 mx-1" />
+              <div className="h-5 w-px bg-white/10 mx-1" />
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl glass-button text-white/60 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20 transition-all text-sm font-semibold cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl glass-button text-white/60 hover:text-white cursor-pointer hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all text-sm font-semibold"
               >
                 <span className="material-symbols-outlined text-[18px]">
                   logout
                 </span>
-                {sidebarOpen && <span>Logout</span>}
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 px-5 pb-5 pt-3">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto overflow-x-hidden rounded-2xl glass-subtle shadow-[0_4px_30px_rgba(0,0,0,0.2)]">
+          <div className="p-6 min-h-full">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

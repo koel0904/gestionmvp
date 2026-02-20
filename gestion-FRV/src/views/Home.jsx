@@ -22,9 +22,12 @@ const Home = () => {
                 efficiency.
               </p>
               <div className="flex flex-wrap gap-5 mt-4">
-                <button className="flex h-14 items-center justify-center rounded-2xl bg-primary px-10 text-base font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary/90 transition-all hover:scale-105">
+                <Link
+                  to="/login"
+                  className="flex h-14 items-center justify-center rounded-2xl bg-primary px-10 text-base font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary/90 transition-all hover:scale-105"
+                >
                   Get Started Free
-                </button>
+                </Link>
                 <div className="flex h-14 items-center justify-center rounded-2xl extreme-glass px-10 text-base font-bold text-black dark:text-white hover:border-white/30 transition-all cursor-pointer">
                   View Demo
                 </div>

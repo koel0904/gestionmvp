@@ -1,8 +1,116 @@
+import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [selectedLocal, setSelectedLocal] = useState(null);
 
+  // Sample locales data. In a full implementation this would come from the user's relations.
+  const userLocales = [
+    {
+      id: 1,
+      name: "Local 1",
+      address: "Main Headquarters",
+      role: user?.role || "admin",
+    },
+  ];
+
+  if (!selectedLocal) {
+    return (
+      <LocalsGrid
+        locales={userLocales}
+        onSelect={setSelectedLocal}
+        user={user}
+      />
+    );
+  }
+
+  return (
+    <LocalDetailView
+      local={selectedLocal}
+      onBack={() => setSelectedLocal(null)}
+      user={user}
+    />
+  );
+}
+
+function LocalsGrid({ locales, onSelect, user }) {
+  return (
+    <div className="space-y-5">
+      {/* ── Welcome Banner ── */}
+      <div className="glass-ultra rounded-2xl p-8 relative overflow-hidden">
+        <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.2)_0%,transparent_70%)] blur-[30px] pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-[radial-gradient(circle,rgba(244,140,37,0.15)_0%,transparent_70%)] blur-[30px] pointer-events-none" />
+        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-accent-violet via-primary to-accent-violet opacity-50" />
+
+        <div className="relative z-10">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent-purple-light mb-2">
+            Workspaces Overview
+          </p>
+          <h1 className="text-3xl font-black tracking-tight mb-2">
+            Welcome back,{" "}
+            <span className="bg-gradient-to-r from-accent-violet via-primary to-accent-purple-light bg-clip-text text-transparent">
+              {user?.name || "User"}
+            </span>
+          </h1>
+          <p className="text-white/70 text-sm font-medium">
+            Select a location to manage its operations.
+          </p>
+        </div>
+      </div>
+
+      {/* ── Locales Grid ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {locales.map((local) => (
+          <button
+            key={local.id}
+            onClick={() => onSelect(local)}
+            className="glass-panel text-left rounded-2xl p-6 hover:scale-[1.02] transition-all duration-300 group relative overflow-hidden cursor-pointer"
+          >
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 glow-purple pointer-events-none rounded-2xl" />
+
+            <div className="relative z-10">
+              <div className="size-12 rounded-xl bg-gradient-to-br from-accent-violet/20 to-primary/10 glass-subtle flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-[24px] text-accent-purple-light">
+                  storefront
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-1 group-hover:text-accent-purple-light transition-colors">
+                {local.name}
+              </h3>
+              <p className="text-sm font-medium text-white/50 mb-6">
+                {local.address}
+              </p>
+
+              <div className="flex items-center justify-between mt-auto">
+                <span className="glass-badge-purple px-2.5 py-1 rounded-lg text-xs font-bold text-accent-purple-light capitalize">
+                  {local.role}
+                </span>
+                <span className="material-symbols-outlined text-white/30 group-hover:text-primary transition-all group-hover:translate-x-1">
+                  arrow_forward
+                </span>
+              </div>
+            </div>
+          </button>
+        ))}
+
+        {/* Create New Local Placeholder */}
+        <button className="glass-panel border-dashed border-2 border-white/10 rounded-2xl p-6 hover:bg-white/[0.02] transition-all duration-300 group flex flex-col items-center justify-center min-h-[200px] cursor-pointer">
+          <div className="size-12 rounded-xl glass-subtle flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <span className="material-symbols-outlined text-[24px] text-white/50 group-hover:text-white">
+              add
+            </span>
+          </div>
+          <h3 className="text-sm font-bold text-white/70 group-hover:text-white transition-colors">
+            Register New Location
+          </h3>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LocalDetailView({ local, onBack, user }) {
   const statCards = [
     {
       title: "Total Revenue",
@@ -47,36 +155,22 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-5">
-      {/* ── Welcome Banner ── */}
-      <div className="glass-ultra rounded-2xl p-8 relative overflow-hidden">
-        {/* Decorative orbs inside card */}
-        <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.2)_0%,transparent_70%)] blur-[30px] pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-[radial-gradient(circle,rgba(244,140,37,0.15)_0%,transparent_70%)] blur-[30px] pointer-events-none" />
-        {/* Top border accent */}
-        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-accent-violet via-primary to-accent-violet opacity-50" />
-
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent-purple-light mb-2">
-              Dashboard Overview
-            </p>
-            <h1 className="text-3xl font-black tracking-tight mb-2">
-              Welcome back,{" "}
-              <span className="bg-gradient-to-r from-accent-violet via-primary to-accent-purple-light bg-clip-text text-transparent">
-                {user?.name || "User"}
-              </span>
-            </h1>
-            <p className="text-white/70 text-sm font-medium">
-              Here's what's happening with your business today.
-            </p>
-          </div>
-          <div className="hidden md:flex items-center gap-2">
-            <button className="glass-button-primary px-5 py-2.5 rounded-xl text-sm font-bold text-white flex items-center gap-2 cursor-pointer">
-              <span className="material-symbols-outlined text-[18px]">add</span>
-              New Order
-            </button>
-          </div>
+    <div className="space-y-5 animate-in fade-in zoom-in-95 duration-300">
+      {/* ── Top Navigation Bar ── */}
+      <div className="flex items-center gap-4 mb-2">
+        <button
+          onClick={onBack}
+          className="size-10 rounded-xl glass-button flex items-center justify-center text-white/70 hover:text-white hover:border-white/20 transition-all cursor-pointer hover:-translate-x-1"
+        >
+          <span className="material-symbols-outlined text-[20px]">
+            arrow_back
+          </span>
+        </button>
+        <div>
+          <h2 className="text-xl font-bold text-white tracking-tight">
+            {local.name} Dashboard
+          </h2>
+          <p className="text-xs text-white/50 font-medium">{local.address}</p>
         </div>
       </div>
 
@@ -198,7 +292,7 @@ export default function Dashboard() {
               </span>
             </div>
             <p className="text-white/60 text-sm font-bold mb-1">
-              No activity yet
+              No activity yet for {local.name}
             </p>
             <p className="text-white/40 text-xs font-medium max-w-[200px]">
               Your recent actions and events will appear here
@@ -216,18 +310,18 @@ export default function Dashboard() {
             </span>
           </div>
           <div>
-            <p className="text-sm font-bold text-white">Business</p>
+            <p className="text-sm font-bold text-white">Current Environment</p>
             <p className="text-xs text-white/50 font-medium">
-              {user?.name ? `${user.name}'s Business` : "Your Business"}
+              {local.name} Workspace
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="glass-badge-purple px-3 py-1.5 rounded-lg text-xs font-bold text-accent-purple-light">
-            {user?.role || "user"}
+          <span className="glass-badge-purple px-3 py-1.5 rounded-lg text-xs font-bold text-accent-purple-light capitalize">
+            {local.role}
           </span>
           <span className="glass-badge-orange px-3 py-1.5 rounded-lg text-xs font-bold text-primary">
-            Free Plan
+            Active
           </span>
         </div>
       </div>
