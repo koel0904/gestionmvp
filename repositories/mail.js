@@ -1,4 +1,3 @@
-// mailer.js
 import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
@@ -12,6 +11,21 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+async function verifyTransporter() {
+    try {
+        const test = {
+            from: process.env.EMAIL_USER,
+            to: 'cuachis17@gmail.com',
+            subject: 'Test de configuración de correo',
+            text: 'Este es un correo de prueba para verificar la configuración del transportador.'
+        }
+        console.log('Verificando transportador de correo...');
+        return transporter.sendMail(test)
+    } catch (error) {
+        console.error('Error verifying mail transporter:', error);
+    }
+}
+
 export class MailRepository {
     // Envía un correo genérico
     async sendMail({ to, subject, text, html }) {
@@ -22,7 +36,7 @@ export class MailRepository {
             text,
             html
         };
-        return this.transporter.sendMail(mailOptions);
+        return transporter.sendMail(mailOptions);
     }
 
     // Método específico para enviar códigos 2FA
