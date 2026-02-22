@@ -40,8 +40,8 @@ model User {
   twoFactorCode  String? @db.VarChar(255)
   twoFactorCodeExpiry DateTime?
 
-  local    Local @relation(fields: [localId], references: [id])
-  localId  Int
+  local    Local? @relation(fields: [localId], references: [id])
+  localId  Int?
 
   master      User?    @relation("MasterSubusers", fields: [masterId], references: [id])
   masterId    Int?     @unique

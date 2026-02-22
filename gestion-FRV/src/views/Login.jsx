@@ -15,7 +15,7 @@ export default function Login() {
 
     try {
       await login(email, password);
-      navigate("/dashboard");
+      navigate("/login/2fa");
     } catch (err) {
       setError(err.message);
     }

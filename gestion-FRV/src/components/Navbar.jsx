@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { useLang } from "../context/LangContext";
+import UserImg from "../assets/user.png"
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,11 +40,11 @@ const Navbar = () => {
 
   return (
     <header
-      className={`fixed top-0 z-[100] w-full px-4 py-4 sm:px-10 transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
+      className={`fixed top-0 z-100 w-full px-4 py-4 sm:px-10 transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
         isVisible ? "translate-y-0" : "-translate-y-[150%]"
       }`}
     >
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between rounded-2xl extreme-glass px-6 py-3 shadow-lg shadow-black/5 dark:shadow-black/20 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-350 items-center justify-between rounded-2xl extreme-glass px-6 py-3 shadow-lg shadow-black/5 dark:shadow-black/20 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center size-9 rounded-xl bg-primary text-white shadow-lg shadow-primary/40">
             <span className="material-symbols-outlined text-[22px]">
@@ -77,9 +78,26 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
+
+
         </nav>
 
         <div className="flex items-center gap-3">
+           {/* Login icon (desktop) */}
+           <Link
+            to="/login"
+            title={(t && t.nav && t.nav.login) ? t.nav.login : "Login"}
+            className={`p-2 rounded-xl w-10 transition-colors duration-300 flex items-center justify-center hover:vibrant-accent-orange ${
+              location.pathname === "/login"
+                ? "text-primary vibrant-accent-orange"
+                : theme === "dark"
+                  ? "text-white/80 hover:text-primary invert"
+                  : "text-black/70 hover:text-primary" // Invert colors for better visibility on light theme
+            }`}
+          >
+           <img src={UserImg} alt="user" /> 
+          </Link>
+
           <button
             onClick={toggleLang}
             className={`extreme-glass-button flex h-10 items-center justify-center rounded-xl px-4 text-xs font-bold uppercase tracking-widest hover:text-primary ${
@@ -98,6 +116,7 @@ const Navbar = () => {
               {theme === "dark" ? "light_mode" : "dark_mode"}
             </span>
           </button>
+          
 
           {/* Mobile Menu Button */}
           <button
@@ -128,6 +147,21 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
+
+          {/* Login icon (mobile) */}
+          <Link
+            to="/login"
+            onClick={() => setIsOpen(false)}
+            title={(t && t.nav && t.nav.login) ? t.nav.login : "Login"}
+            className={`text-sm font-semibold p-3 rounded-xl transition-all flex items-center justify-start gap-3 ${
+              location.pathname === "/login"
+                ? "bg-primary/10 text-primary font-bold"
+                : `hover:bg-white/5 hover:pl-4 ${theme === "dark" ? "text-white/70" : "text-black/70"}`
+            }`}
+          >
+            <span className="material-symbols-outlined text-[20px]">login</span>
+            <span className="sr-only">{(t && t.nav && t.nav.login) ? t.nav.login : "Login"}</span>
+          </Link>
         </div>
       )}
     </header>

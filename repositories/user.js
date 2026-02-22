@@ -5,7 +5,9 @@ const prisma = new PrismaClient();
 
 class userRepository {
   static async getUserByEmail(email) {
-    return await prisma.user.findUnique({ where: { email } });
+      const user = await prisma.user.findUnique({ where: { email } })
+
+    return user;
   }
 
   static async verifyUser(email, password) {
@@ -13,23 +15,9 @@ class userRepository {
     if (!user) {
       return false;
     }
+    
     const validPassword = await bcrypt.compare(password, user.password);
-    return validPassword ? user : false;
-  }
-
-  static async verifyUserWith2FA(email, password, code) {
-    const user = await this.getUserByEmail(email);
-    if (!user) {
-      return false;
-    }
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      return false;
-    }
-    if (!user.twoFactorCode || user.twoFactorCodeExpiry < new Date() && user.twoFactorCode !== code) {
-      return false;
-    }
-    return user.id;
+    return validPassword ? true : false;
   }
 
   static async afSetCode(email, code) {
@@ -45,17 +33,19 @@ class userRepository {
 
   static async verify2FACode(email, code) {
     const user = await this.getUserByEmail(email);
+    console.log(user)
     if (!user || !user.twoFactorCode || user.twoFactorCodeExpiry < new Date()) {
       return false;
     }
-    return user.twoFactorCode === code;
+     
+    return user.twoFactorCode === code ? user.id : false;
   }
 
-  static async createUser(email, password) {
+  static async createUser(name, email, password) {
     const saltRounds = parseInt(process.env.SALT) || 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const newUser = await prisma.user.create({
-      data: { email, password: hashedPassword },
+      data: { name, email, password: hashedPassword },
     });
     const user = this.getUserById(newUser.id);
     return user;

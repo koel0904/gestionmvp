@@ -5,7 +5,8 @@ const SECRET = process.env.SECRET;
 
 async function authenticateToken(req, res, next) {
   const token = req.cookies.token;
-
+  console.log("Authenticating token:", { token });
+  
   if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -14,6 +15,8 @@ async function authenticateToken(req, res, next) {
     if (err) {
       return res.status(403).json({ error: "Forbidden" });
     }
+    const payload = jwt.verify(token, SECRET);
+
     req.user = user;
     next();
   });

@@ -3,15 +3,15 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { LangProvider } from "./context/LangContext";
 import { AuthProvider } from "./context/AuthContext";
 import Layout from "./components/Layout";
-import DashboardLayout from "./components/DashboardLayout";
-import ProtectedRoute from "./components/ProtectedRoute";
+import DashboardRoutes from "./views/localDashboard/routes";
 import Home from "./views/Home";
 import Features from "./views/Features";
 import Pricing from "./views/Pricing";
 import Contact from "./views/Contact";
 import Login from "./views/Login";
 import Register from "./views/Register";
-import Dashboard from "./views/Dashboard";
+import TwoFALogin from "./views/2fa-login";
+
 import "./App.css";
 
 function App() {
@@ -32,17 +32,10 @@ function App() {
               {/* Auth Routes (No Navbar/Footer) */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/login/2fa" element={<TwoFALogin />} />
 
               {/* Protected Dashboard Routes */}
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/dashboard" element={<Dashboard />} />
-              </Route>
+              {DashboardRoutes}
             </Routes>
           </AuthProvider>
         </Router>

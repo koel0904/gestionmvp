@@ -1,12 +1,15 @@
 import nodemailer from 'nodemailer';
 
+const user = process.env.EMAIL_USER;
+
+console.log(user);
+
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST, // Ejemplo: "smtp.gmail.com"
-    port: process.env.EMAIL_PORT, // Ejemplo: 587
-    secure: true, // true for 465, false for other ports
+    port: process.env.EMAIL_PORT ? Number(process.env.EMAIL_PORT) : undefined, // Ejemplo: 587
+    secure: process.env.EMAIL_SECURE === 'true' || process.env.EMAIL_PORT === '465', // true for 465, false for other ports
     auth: {
-        user: process.env.EMAIL_USER, // Tu correo electrónico:w
-
+        user: process.env.EMAIL_USER, // Tu correo electrónico
         pass: process.env.EMAIL_PASS  // Tu contraseña o app password
     }
 });
@@ -26,17 +29,26 @@ async function verifyTransporter() {
     }
 }
 
+// verifyTransporter();
+
 export class MailRepository {
     // Envía un correo genérico
-    async sendMail({ to, subject, text, html }) {
+    async sendMail({ to, subject, text, html }){
+        try {
         const mailOptions = {
-            from: this.from,
+            from: user,
             to,
             subject,
             text,
             html
         };
+        
+        console.log('Enviando correo:', { from: user, to, subject, text });
+
         return transporter.sendMail(mailOptions);
+    } catch (error) {
+        console.error('Error sending mail:', error);
+        throw error;}
     }
 
     // Método específico para enviar códigos 2FA

@@ -19,13 +19,24 @@ export function AuthProvider({ children }) {
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
+        return data.user;
       }
-    } catch {
-      // Not authenticated
+      // not ok -> unauthenticated
+      setUser(null);
+      return null;
+    } catch (err) {
+      // Network or other error, consider user unauthenticated but do not force a navigation
+      setUser(null);
+      return null;
     } finally {
       setLoading(false);
     }
   }
+
+  // Exposed helper to let components re-check auth after login
+  const refresh = async () => {
+    return await checkAuth();
+  };
 
   async function login(email, password) {
     const res = await fetch(`${API_URL}/login`, {
@@ -34,6 +45,8 @@ export function AuthProvider({ children }) {
       credentials: "include",
       body: JSON.stringify({ email, password }),
     });
+    
+    console.log("Login response:", res);
 
     if (!res.ok) {
       const data = await res.json();
@@ -42,6 +55,12 @@ export function AuthProvider({ children }) {
 
     const data = await res.json();
     setUser(data.user);
+    // Guardar el email en localStorage para reutilizarlo (ej. prefill en el login)
+    try {
+      localStorage.setItem('savedEmail', email);
+    } catch (e) {
+      console.warn('No se pudo guardar el email en localStorage', e);
+    }
     return data.user;
   }
 
@@ -67,11 +86,17 @@ export function AuthProvider({ children }) {
     // Clear cookie by calling a logout endpoint or just clear state
     // For now, clear the cookie by making a request or clearing state
     setUser(null);
+    // Remover el email guardado al hacer logout
+    try {
+      localStorage.removeItem('savedEmail');
+    } catch (e) {
+      console.warn('No se pudo remover el email de localStorage', e);
+    }
     // Navigate will be handled by the component
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -110,7 +110,7 @@ function LocalsGrid({ locales, onSelect, user }) {
   );
 }
 
-function LocalDetailView({ local, onBack, user }) {
+function LocalDetailView({ local, onBack  }) {
   const statCards = [
     {
       title: "Total Revenue",
