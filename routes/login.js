@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import userRepository from "../repositories/user.js";
 import MailRepository from "../repositories/mail.js";
+import authenticateToken from "../middleware/middleware.js";
 
 const SECRET = process.env.SECRET;
 const router = express.Router();
@@ -14,7 +15,7 @@ router.post("/login", async (req, res) => {
 
   try {
     const user = await userRepository.verifyUser(email, password);
-    if (!user || user === false) {
+    if (!user || user === false) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -83,7 +84,9 @@ router.post("/reset-password", async (req, res) => {
     await sendPasswordReset(email, resetLink);
     res.json({ message: "Password reset instructions sent to email" });
   } catch {
-    res.status(500).json({ error: "Error sending password reset instructions" });
+    res
+      .status(500)
+      .json({ error: "Error sending password reset instructions" });
   }
 });
 
@@ -101,13 +104,24 @@ router.post("/reset-password/confirm", async (req, res) => {
   }
 });
 
-router.post('/logut', (req, res) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: false,
-    sameSite: 'strict',
-  });
-  res.json({ message: 'Logged out successfully' });
+router.get("/me", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await userRepository.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const safeUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role, // included role if exists
+    };
+    return res.json({ user: safeUser });
+  } catch {
+    res.status(500).json({ error: "Error fetching user" });
+  }
 });
 
 export default router;

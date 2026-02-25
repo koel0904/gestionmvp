@@ -2,7 +2,7 @@ import { Route } from "react-router-dom";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import DashboardLayout from "../../components/DashboardLayout";
 import Dashboard from "./Dashboard";
-import Inicio from "./Home";
+import Inicio from "../Home";
 
 const DashboardRoutes = (
   <Route
