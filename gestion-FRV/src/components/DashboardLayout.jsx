@@ -4,6 +4,15 @@ import { useAuth } from "../context/AuthContext";
 
 const sidebarLinks = [
   { name: "Overview", icon: "space_dashboard", path: "/dashboard" },
+  {
+    name: "Proveedores",
+    icon: "local_shipping",
+    path: "/dashboard/proveedores",
+  },
+  { name: "Ventas", icon: "payments", path: "/dashboard/ventas" },
+  { name: "Clientes", icon: "groups", path: "/dashboard/clientes" },
+  { name: "Inventario", icon: "inventory_2", path: "/dashboard/inventario" },
+  { name: "Usuarios", icon: "manage_accounts", path: "/dashboard/usuarios" },
   { name: "Settings", icon: "settings", path: "/dashboard/settings" },
 ];
 
@@ -77,8 +86,8 @@ export default function DashboardLayout() {
                     <span
                       className={`material-symbols-outlined transition-all duration-300 ${
                         isActive
-                          ? "text-transparent bg-clip-text bg-gradient-to-br from-accent-orange to-primary drop-shadow-[0_0_8px_rgba(249,115,22,0.4)] scale-110"
-                          : "text-[22px] text-white/40 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-br group-hover:from-accent-orange group-hover:to-primary group-hover:drop-shadow-[0_0_8px_rgba(124,58,237,0.6)]"
+                          ? "text-transparent bg-clip-text bg-gradient-to-br from-primary-light to-primary-dark drop-shadow-[0_0_8px_rgba(124,58,237,0.4)] scale-110"
+                          : "text-[22px] text-white/40 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-br group-hover:from-primary-light group-hover:to-primary-dark group-hover:drop-shadow-[0_0_8px_rgba(124,58,237,0.6)]"
                       }`}
                     >
                       {link.icon}

@@ -4,6 +4,8 @@ import register from "./routes/register.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
+import locales from "./routes/locales.js";
+
 const app = express();
 
 app.use(
@@ -22,7 +24,7 @@ app.get("/", (req, res) => {
   res.send("Hello World From index.js");
 });
 
-app.use("/api", login, register);
+app.use("/api", login, register, locales);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

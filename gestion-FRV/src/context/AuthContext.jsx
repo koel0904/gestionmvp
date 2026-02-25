@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext(null);
@@ -26,6 +27,7 @@ export function AuthProvider({ children }) {
       return null;
     } catch (err) {
       // Network or other error, consider user unauthenticated but do not force a navigation
+      console.error("Auth check failed:", err);
       setUser(null);
       return null;
     } finally {
@@ -45,7 +47,7 @@ export function AuthProvider({ children }) {
       credentials: "include",
       body: JSON.stringify({ email, password }),
     });
-    
+
     console.log("Login response:", res);
 
     if (!res.ok) {
@@ -57,9 +59,9 @@ export function AuthProvider({ children }) {
     setUser(data.user);
     // Guardar el email en localStorage para reutilizarlo (ej. prefill en el login)
     try {
-      localStorage.setItem('savedEmail', email);
+      localStorage.setItem("savedEmail", email);
     } catch (e) {
-      console.warn('No se pudo guardar el email en localStorage', e);
+      console.warn("No se pudo guardar el email en localStorage", e);
     }
     return data.user;
   }
@@ -88,15 +90,17 @@ export function AuthProvider({ children }) {
     setUser(null);
     // Remover el email guardado al hacer logout
     try {
-      localStorage.removeItem('savedEmail');
+      localStorage.removeItem("savedEmail");
     } catch (e) {
-      console.warn('No se pudo remover el email de localStorage', e);
+      console.warn("No se pudo remover el email de localStorage", e);
     }
     // Navigate will be handled by the component
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, refresh }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -1,20 +1,17 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState("light");
-
-  useEffect(() => {
-    // Check system preference or local storage on mount
+  const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
-    }
-  }, []);
+    if (savedTheme) return savedTheme;
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches)
+      return "dark";
+    return "light";
+  });
 
   useEffect(() => {
     // Update data-theme attribute and local storage

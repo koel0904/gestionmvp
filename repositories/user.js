@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 class userRepository {
   static async getUserByEmail(email) {
-      const user = await prisma.user.findUnique({ where: { email } })
+    const user = await prisma.user.findUnique({ where: { email } });
 
     return user;
   }
@@ -15,7 +15,7 @@ class userRepository {
     if (!user) {
       return false;
     }
-    
+
     const validPassword = await bcrypt.compare(password, user.password);
     return validPassword ? true : false;
   }
@@ -26,18 +26,21 @@ class userRepository {
     }
     await prisma.user.update({
       where: { email },
-      data: { twoFactorCode: code, twoFactorCodeExpiry: new Date(Date.now() + 10 * 60 * 1000) },
+      data: {
+        twoFactorCode: code,
+        twoFactorCodeExpiry: new Date(Date.now() + 10 * 60 * 1000),
+      },
     });
     return;
   }
 
   static async verify2FACode(email, code) {
     const user = await this.getUserByEmail(email);
-    console.log(user)
+    console.log(user);
     if (!user || !user.twoFactorCode || user.twoFactorCodeExpiry < new Date()) {
       return false;
     }
-     
+
     return user.twoFactorCode === code ? user.id : false;
   }
 
@@ -57,6 +60,7 @@ class userRepository {
       id: user.id,
       email: user.email,
       name: user.name,
+      role: user.role,
     };
     return activeUser;
   }
