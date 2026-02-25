@@ -13,8 +13,8 @@ const sidebarLinks = [
   { name: "Clientes", icon: "groups", path: "/dashboard/clientes" },
   { name: "Inventario", icon: "inventory_2", path: "/dashboard/inventario" },
   { name: "Usuarios", icon: "manage_accounts", path: "/dashboard/usuarios" },
+  { name: "Analitics", icon: "analytics", path: "/dashboard/analitics" },
   { name: "Settings", icon: "settings", path: "/dashboard/settings" },
-  { name: "Analitics", icon: "analytics", path: "/dashboard/analitics" }
 ];
 
 export default function DashboardLayout() {
@@ -71,8 +71,8 @@ export default function DashboardLayout() {
                   to={link.path}
                   title={!sidebarOpen ? link.name : undefined}
                   className={`flex items-center p-2 rounded-xl transition-all duration-300 group relative overflow-hidden box-border ${isActive
-                      ? "bg-white/[0.06] text-white shadow-lg border border-white/10"
-                      : "text-white/60 hover:text-white hover:bg-white/[0.03] border border-transparent"
+                    ? "bg-white/[0.06] text-white shadow-lg border border-white/10"
+                    : "text-white/60 hover:text-white hover:bg-white/[0.03] border border-transparent"
                     }`}
                 >
                   {isActive && (

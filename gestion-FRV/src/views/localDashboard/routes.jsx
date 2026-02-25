@@ -22,6 +22,13 @@ const DashboardRoutes = (
   >
     <Route index element={<Dashboard />} />
     <Route path="inicio" element={<Inicio />} />
+    <Route path="proveedores" element={<Proveedores />} />
+    <Route path="ventas" element={<Ventas />} />
+    <Route path="clientes" element={<Clientes />} />
+    <Route path="inventario" element={<Inventario />} />
+    <Route path="usuarios" element={<Usuarios />} />
+    <Route path="settings" element={<Settings />} />
+    <Route path="analitics" element={<Analitics />} />
     {/* más subrutas aquí */}
   </Route>
 );
