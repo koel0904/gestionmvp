@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 const sidebarLinks = [
   { name: "Overview", icon: "space_dashboard", path: "/dashboard" },
   { name: "Settings", icon: "settings", path: "/dashboard/settings" },
+  { name: "Analitics", icon: "analytics", path: "/dashboard/analitics" }
 ];
 
 export default function DashboardLayout() {
@@ -26,9 +27,8 @@ export default function DashboardLayout() {
       {/* SIDEBAR                              */}
       {/* ══════════════════════════════════════ */}
       <aside
-        className={`relative z-40 flex flex-col shrink-0 transition-all duration-300 ease-in-out h-full ${
-          sidebarOpen ? "w-[260px]" : "w-[80px]"
-        }`}
+        className={`relative z-40 flex flex-col shrink-0 transition-all duration-300 ease-in-out h-full ${sidebarOpen ? "w-[260px]" : "w-[80px]"
+          }`}
       >
         <div className="flex flex-col h-full rounded-2xl overflow-hidden glass-heavy shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative">
           {/* Top accent line removed for cleaner glass effect */}
@@ -41,11 +41,10 @@ export default function DashboardLayout() {
               </span>
             </div>
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap flex items-center ${
-                sidebarOpen
+              className={`overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap flex items-center ${sidebarOpen
                   ? "max-w-[150px] opacity-100 ml-3"
                   : "max-w-0 opacity-0 ml-0"
-              }`}
+                }`}
             >
               <span className="text-lg font-extrabold tracking-tight bg-gradient-to-r from-accent-orange to-primary-light bg-clip-text text-transparent">
                 BizManage
@@ -62,11 +61,10 @@ export default function DashboardLayout() {
                   key={link.path}
                   to={link.path}
                   title={!sidebarOpen ? link.name : undefined}
-                  className={`flex items-center p-2 rounded-xl transition-all duration-300 group relative overflow-hidden box-border ${
-                    isActive
+                  className={`flex items-center p-2 rounded-xl transition-all duration-300 group relative overflow-hidden box-border ${isActive
                       ? "bg-white/[0.06] text-white shadow-lg border border-white/10"
                       : "text-white/60 hover:text-white hover:bg-white/[0.03] border border-transparent"
-                  }`}
+                    }`}
                 >
                   {isActive && (
                     <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent pointer-events-none" />
@@ -75,21 +73,19 @@ export default function DashboardLayout() {
                     className={`w-10 h-10 flex items-center justify-center shrink-0 relative z-10 transition-transform group-hover:scale-110 ${!sidebarOpen && "mx-auto"}`}
                   >
                     <span
-                      className={`material-symbols-outlined transition-all duration-300 ${
-                        isActive
+                      className={`material-symbols-outlined transition-all duration-300 ${isActive
                           ? "text-transparent bg-clip-text bg-gradient-to-br from-accent-orange to-primary drop-shadow-[0_0_8px_rgba(249,115,22,0.4)] scale-110"
                           : "text-[22px] text-white/40 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-br group-hover:from-accent-orange group-hover:to-primary group-hover:drop-shadow-[0_0_8px_rgba(124,58,237,0.6)]"
-                      }`}
+                        }`}
                     >
                       {link.icon}
                     </span>
                   </div>
                   <div
-                    className={`overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap flex items-center relative z-10 ${
-                      sidebarOpen
+                    className={`overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap flex items-center relative z-10 ${sidebarOpen
                         ? "max-w-[160px] opacity-100 ml-2"
                         : "max-w-0 opacity-0 ml-0"
-                    }`}
+                      }`}
                   >
                     <span className="text-sm font-semibold">{link.name}</span>
                   </div>
@@ -101,9 +97,8 @@ export default function DashboardLayout() {
           {/* User Section */}
           <div className="border-t border-white/[0.04] p-2 shrink-0 overflow-hidden box-border flex justify-center items-center h-[80px]">
             <div
-              className={`glass-subtle rounded-xl flex items-center h-16 box-border transition-all duration-300 overflow-hidden ${
-                sidebarOpen ? "w-full" : "w-16 justify-center"
-              }`}
+              className={`glass-subtle rounded-xl flex items-center h-16 box-border transition-all duration-300 overflow-hidden ${sidebarOpen ? "w-full" : "w-16 justify-center"
+                }`}
             >
               <div className="w-16 h-16 flex items-center justify-center shrink-0">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/40 to-accent-orange/30 border border-white/20 flex items-center justify-center text-white/90 shadow-inner group-hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all duration-300">
@@ -113,11 +108,10 @@ export default function DashboardLayout() {
                 </div>
               </div>
               <div
-                className={`transition-all duration-300 ease-in-out flex flex-col justify-center overflow-hidden ${
-                  sidebarOpen
+                className={`transition-all duration-300 ease-in-out flex flex-col justify-center overflow-hidden ${sidebarOpen
                     ? "max-w-[180px] opacity-100"
                     : "max-w-0 opacity-0"
-                }`}
+                  }`}
               >
                 <div className="w-[180px] pl-1 pr-3 text-left">
                   <p className="text-sm font-bold text-white whitespace-normal leading-[1.15] break-words">
