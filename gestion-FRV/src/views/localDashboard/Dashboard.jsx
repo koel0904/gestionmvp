@@ -39,17 +39,15 @@ function LocalsGrid({ locales, onSelect, user }) {
     <div className="space-y-5">
       {/* ── Welcome Banner ── */}
       <div className="glass-ultra rounded-2xl p-8 relative overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.2)_0%,transparent_70%)] blur-[30px] pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-[radial-gradient(circle,rgba(244,140,37,0.15)_0%,transparent_70%)] blur-[30px] pointer-events-none" />
-        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-accent-violet via-primary to-accent-violet opacity-50" />
+        {/* Top accent line removed for cleaner glass effect */}
 
         <div className="relative z-10">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent-purple-light mb-2">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
             Workspaces Overview
           </p>
           <h1 className="text-3xl font-black tracking-tight mb-2">
             Welcome back,{" "}
-            <span className="bg-gradient-to-r from-accent-violet via-primary to-accent-purple-light bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-accent-orange to-primary-light bg-clip-text text-transparent drop-shadow-sm">
               {user?.name || "User"}
             </span>
           </h1>
@@ -70,12 +68,12 @@ function LocalsGrid({ locales, onSelect, user }) {
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 glow-purple pointer-events-none rounded-2xl" />
 
             <div className="relative z-10">
-              <div className="size-12 rounded-xl bg-gradient-to-br from-accent-violet/20 to-primary/10 glass-subtle flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-[24px] text-accent-purple-light">
+              <div className="size-12 rounded-xl bg-gradient-to-br from-primary/30 to-primary-dark/20 glass-subtle flex items-center justify-center mb-4 border border-white/20 shadow-inner">
+                <span className="material-symbols-outlined text-[24px] text-transparent bg-clip-text bg-gradient-to-br from-accent-orange-light to-white drop-shadow-md group-hover:from-accent-orange group-hover:to-primary transition-all duration-300">
                   storefront
                 </span>
               </div>
-              <h3 className="text-xl font-bold text-white mb-1 group-hover:text-accent-purple-light transition-colors">
+              <h3 className="text-xl font-bold text-white mb-1 group-hover:text-primary-light transition-colors">
                 {local.name}
               </h3>
               <p className="text-sm font-medium text-white/50 mb-6">
@@ -83,10 +81,10 @@ function LocalsGrid({ locales, onSelect, user }) {
               </p>
 
               <div className="flex items-center justify-between mt-auto">
-                <span className="glass-badge-purple px-2.5 py-1 rounded-lg text-xs font-bold text-accent-purple-light capitalize">
+                <span className="glass-badge-purple px-2.5 py-1 rounded-lg text-xs font-semibold text-white capitalize">
                   {local.role}
                 </span>
-                <span className="material-symbols-outlined text-white/30 group-hover:text-primary transition-all group-hover:translate-x-1">
+                <span className="material-symbols-outlined text-white/30 group-hover:text-primary-light transition-all group-hover:translate-x-1">
                   arrow_forward
                 </span>
               </div>
@@ -110,47 +108,47 @@ function LocalsGrid({ locales, onSelect, user }) {
   );
 }
 
-function LocalDetailView({ local, onBack  }) {
+function LocalDetailView({ local, onBack }) {
   const statCards = [
     {
       title: "Total Revenue",
       value: "$0.00",
       change: "+0%",
       icon: "payments",
-      gradient: "from-accent-violet/25 to-accent-purple/10",
-      iconColor: "text-accent-purple-light",
-      glowClass: "glow-purple",
-      borderColor: "border-accent-violet/15",
+      gradient: "from-primary/30 to-primary/10",
+      iconColor: "text-primary-light drop-shadow-sm",
+      glowClass: "glow-orange" /* mapped to opaque green */,
+      borderColor: "border-primary/30",
     },
     {
       title: "Orders",
       value: "0",
       change: "+0%",
       icon: "shopping_bag",
-      gradient: "from-primary/25 to-primary-dark/10",
-      iconColor: "text-primary-light",
-      glowClass: "glow-orange",
-      borderColor: "border-primary/15",
+      gradient: "from-white/20 to-white/5",
+      iconColor: "text-white drop-shadow-md",
+      glowClass: "glow-mixed",
+      borderColor: "border-white/20",
     },
     {
       title: "Customers",
       value: "0",
       change: "+0%",
       icon: "group",
-      gradient: "from-accent-violet/20 to-primary/10",
-      iconColor: "text-accent-purple-light",
-      glowClass: "glow-mixed",
-      borderColor: "border-accent-violet/12",
+      gradient: "from-primary/20 to-primary/5",
+      iconColor: "text-primary-light drop-shadow-sm",
+      glowClass: "glow-orange",
+      borderColor: "border-primary/20",
     },
     {
       title: "Products",
       value: "0",
       change: "+0%",
       icon: "inventory_2",
-      gradient: "from-primary/20 to-accent-violet/10",
-      iconColor: "text-primary",
+      gradient: "from-blue-400/20 to-blue-300/5",
+      iconColor: "text-blue-400 drop-shadow-md",
       glowClass: "glow-mixed",
-      borderColor: "border-primary/12",
+      borderColor: "border-blue-400/20",
     },
   ];
 
@@ -197,7 +195,7 @@ function LocalDetailView({ local, onBack  }) {
                     {card.icon}
                   </span>
                 </div>
-                <span className="glass-badge-purple text-xs font-bold text-accent-purple-light px-2.5 py-1 rounded-lg">
+                <span className="glass-badge-orange text-[10px] font-bold text-white px-2 py-0.5 rounded-md border-white/20 bg-white/5">
                   {card.change}
                 </span>
               </div>
@@ -216,9 +214,9 @@ function LocalDetailView({ local, onBack  }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Quick Actions */}
         <div className="glass-heavy rounded-2xl p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-accent-violet/30 to-transparent" />
-          <h3 className="text-xs font-black text-accent-purple-light uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-accent-violet">
+          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary-light/40 to-transparent" />
+          <h3 className="text-xs font-black text-primary-light uppercase tracking-[0.15em] mb-4 flex items-center gap-2 drop-shadow-sm">
+            <span className="material-symbols-outlined text-[16px] text-primary-light">
               bolt
             </span>
             Quick Actions
@@ -229,30 +227,33 @@ function LocalDetailView({ local, onBack  }) {
                 icon: "add_circle",
                 label: "New Order",
                 desc: "Create a sales order",
-                gradient: "from-primary/20 to-primary/5",
-                iconColor: "text-primary",
+                gradient: "from-white/20 to-white/5",
+                iconColor: "text-white drop-shadow-md",
+                borderColor: "border-white/20",
               },
               {
                 icon: "person_add",
                 label: "Add Customer",
                 desc: "Register a client",
-                gradient: "from-accent-violet/20 to-accent-violet/5",
-                iconColor: "text-accent-purple-light",
+                gradient: "from-primary/30 to-primary/10",
+                iconColor: "text-primary-light drop-shadow-sm",
+                borderColor: "border-primary/30",
               },
               {
                 icon: "inventory",
                 label: "Add Product",
                 desc: "Add to inventory",
-                gradient: "from-primary/15 to-accent-violet/10",
-                iconColor: "text-primary-light",
+                gradient: "from-white/20 to-white/5",
+                iconColor: "text-white drop-shadow-md",
+                borderColor: "border-white/20",
               },
             ].map((action) => (
               <button
                 key={action.label}
-                className="w-full glass-button rounded-xl px-4 py-3 text-left group cursor-pointer flex items-center gap-3"
+                className="w-full glass-button rounded-xl px-4 py-3 text-left group cursor-pointer flex items-center gap-3 hover:bg-white/[0.08]"
               >
                 <div
-                  className={`size-9 rounded-lg bg-gradient-to-br ${action.gradient} glass-subtle flex items-center justify-center shrink-0`}
+                  className={`size-9 rounded-lg bg-gradient-to-br ${action.gradient} glass-subtle flex items-center justify-center shrink-0 border ${action.borderColor}`}
                 >
                   <span
                     className={`material-symbols-outlined text-[18px] ${action.iconColor}`}
@@ -268,7 +269,7 @@ function LocalDetailView({ local, onBack  }) {
                     {action.desc}
                   </p>
                 </div>
-                <span className="material-symbols-outlined text-[16px] text-white/30 group-hover:text-accent-purple-light group-hover:translate-x-1 transition-all">
+                <span className="material-symbols-outlined text-[16px] text-white/30 group-hover:text-primary-light group-hover:translate-x-1 transition-all">
                   arrow_forward
                 </span>
               </button>
@@ -278,16 +279,16 @@ function LocalDetailView({ local, onBack  }) {
 
         {/* Recent Activity */}
         <div className="lg:col-span-2 glass-heavy rounded-2xl p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-          <h3 className="text-xs font-black text-primary uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-primary">
+          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
+          <h3 className="text-xs font-black text-blue-400 uppercase tracking-[0.15em] mb-4 flex items-center gap-2 drop-shadow-md">
+            <span className="material-symbols-outlined text-[16px] text-blue-400">
               history
             </span>
             Recent Activity
           </h3>
           <div className="flex flex-col items-center justify-center py-14 text-center">
-            <div className="size-20 rounded-2xl glass-panel border-accent-violet/10 flex items-center justify-center mb-5 glow-purple">
-              <span className="material-symbols-outlined text-4xl text-accent-violet/50">
+            <div className="size-20 rounded-2xl glass-panel border-blue-400/20 flex items-center justify-center mb-5 shadow-[0_0_30px_rgba(96,165,250,0.15)]">
+              <span className="material-symbols-outlined text-4xl text-blue-400/60 drop-shadow-md">
                 history
               </span>
             </div>
@@ -302,10 +303,10 @@ function LocalDetailView({ local, onBack  }) {
       </div>
 
       {/* ── Business Info Bar ── */}
-      <div className="glass-panel rounded-2xl p-5 flex items-center justify-between">
+      <div className="glass-panel rounded-2xl p-5 flex items-center justify-between border-t border-white/10">
         <div className="flex items-center gap-4">
-          <div className="size-10 rounded-xl bg-gradient-to-br from-accent-violet/20 to-primary/10 glass-subtle flex items-center justify-center">
-            <span className="material-symbols-outlined text-[20px] text-accent-purple-light">
+          <div className="size-10 rounded-xl bg-gradient-to-br from-primary/30 to-primary-dark/20 glass-subtle flex items-center justify-center border border-white/20 shadow-inner">
+            <span className="material-symbols-outlined text-[20px] text-white drop-shadow-md">
               domain
             </span>
           </div>
@@ -317,10 +318,10 @@ function LocalDetailView({ local, onBack  }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="glass-badge-purple px-3 py-1.5 rounded-lg text-xs font-bold text-accent-purple-light capitalize">
+          <span className="glass-badge-purple px-3 py-1.5 rounded-lg text-xs font-semibold text-white capitalize">
             {local.role}
           </span>
-          <span className="glass-badge-orange px-3 py-1.5 rounded-lg text-xs font-bold text-primary">
+          <span className="glass-badge-purple px-3 py-1.5 rounded-lg text-xs font-semibold text-white">
             Active
           </span>
         </div>

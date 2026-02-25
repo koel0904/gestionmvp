@@ -12,7 +12,7 @@ const Home = () => {
                 <span className="text-primary vibrant-accent-orange">
                   Total
                 </span>{" "}
-                <span className="text-[var(--color-accent-violet)] vibrant-accent-violet">
+                <span className="text-[var(--color-primary)] vibrant-accent-violet">
                   Clarity
                 </span>
               </h1>
@@ -61,7 +61,7 @@ const Home = () => {
               </div>
               <div className="absolute -top-6 -right-6 hidden sm:flex extreme-glass p-4 rounded-2xl flex-col gap-2 w-40 shadow-2xl">
                 <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-lg bg-[var(--color-accent-violet)]/20 flex items-center justify-center text-[var(--color-accent-violet)] border border-[var(--color-accent-violet)]/30">
+                  <div className="size-8 rounded-lg bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/30">
                     <span className="material-symbols-outlined text-sm">
                       groups
                     </span>
@@ -71,7 +71,7 @@ const Home = () => {
                   </p>
                 </div>
                 <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-[var(--color-accent-violet)] w-3/4 shadow-[0_0_8px_rgba(139,92,246,0.5)]"></div>
+                  <div className="h-full bg-[var(--color-primary)] w-3/4 shadow-[0_0_8px_rgba(139,92,246,0.5)]"></div>
                 </div>
               </div>
             </div>
@@ -85,7 +85,7 @@ const Home = () => {
             <div className="max-w-2xl">
               <h2 className="text-4xl font-extrabold tracking-tight mb-5 sm:text-5xl text-black dark:text-white">
                 Future-Proof{" "}
-                <span className="text-[var(--color-accent-violet)]">
+                <span className="text-[var(--color-primary)]">
                   Capabilities
                 </span>
               </h2>
@@ -133,7 +133,7 @@ const Home = () => {
             </div>
             <div className="group relative flex flex-col gap-6 rounded-3xl extreme-glass p-6 transition-all duration-500 hover:-translate-y-2">
               <div className="absolute top-6 right-6 z-10">
-                <button className="flex h-10 w-10 items-center justify-center rounded-xl extreme-glass bg-[var(--color-accent-violet)]/20 text-[var(--color-accent-violet)] border border-[var(--color-accent-violet)]/40 shadow-lg hover:scale-110 transition-transform">
+                <button className="flex h-10 w-10 items-center justify-center rounded-xl extreme-glass bg-[var(--color-primary)]/20 text-[var(--color-primary)] border border-[var(--color-primary)]/40 shadow-lg hover:scale-110 transition-transform">
                   <span className="material-symbols-outlined text-[24px]">
                     add
                   </span>
@@ -191,7 +191,7 @@ const Home = () => {
         <div className="mx-auto max-w-[1000px] rounded-[2.5rem] extreme-glass p-10 sm:p-20 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
             <div className="absolute -top-32 -left-32 w-80 h-80 bg-primary/30 rounded-full blur-[100px]"></div>
-            <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-[var(--color-accent-violet)]/30 rounded-full blur-[100px]"></div>
+            <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-[var(--color-primary)]/30 rounded-full blur-[100px]"></div>
           </div>
           <div className="relative z-10">
             <h2 className="text-4xl font-black mb-6 sm:text-5xl leading-tight text-black dark:text-white">

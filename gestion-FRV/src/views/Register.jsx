@@ -159,7 +159,7 @@ export default function Register() {
               >
                 I agree to the{" "}
                 <a
-                  className="text-primary hover:text-accent-violet underline decoration-primary/30 transition-colors"
+                  className="text-primary hover:text-accent-orange underline decoration-primary/30 transition-colors"
                   href="#"
                 >
                   Privacy Policy
@@ -169,7 +169,7 @@ export default function Register() {
             </div>
             {/* Action Button */}
             <button
-              className="w-full mt-4 bg-gradient-to-r from-primary to-accent-violet hover:from-orange-500 hover:to-violet-500 text-white font-bold py-4 rounded-lg shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-base tracking-wide flex items-center justify-center gap-2 group/btn"
+              className="w-full mt-4 bg-gradient-to-r from-primary to-accent-orange hover:from-orange-500 hover:to-violet-500 text-white font-bold py-4 rounded-lg shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-base tracking-wide flex items-center justify-center gap-2 group/btn"
               type="submit"
             >
               Create Account

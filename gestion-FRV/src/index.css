@@ -21,19 +21,19 @@
    ═══════════════════════════════════════════════ */
 
 @theme {
-  /* Primary palette */
-  --color-primary: #f48c25;
-  --color-primary-dark: #d66f08;
-  --color-primary-light: #ffaa55;
-  --color-accent-violet: #8b5cf6;
-  --color-accent-purple: #7c3aed;
-  --color-accent-purple-light: #a78bfa;
+  /* Primary palette - Elegant Professional Violet/Orange */
+  --color-primary: #7c3aed; /* Tailwind violet-600 */
+  --color-primary-dark: #5b21b6; /* violet-800 */
+  --color-primary-light: #a78bfa; /* violet-400 */
+  --color-accent-orange: #f97316; /* orange-500 */
+  --color-accent-orange-dark: #ea580c; /* orange-600 */
+  --color-accent-orange-light: #fdba74; /* orange-300 */
 
   /* Backgrounds */
   --color-background-light: #f8f7f5;
-  --color-background-dark: #05010a;
-  --color-surface-dark: #0a0314;
-  --color-surface-elevated: #100620;
+  --color-background-dark: #030a16; /* Deep Royal Blue / Black */
+  --color-surface-dark: #050e21;
+  --color-surface-elevated: #081229;
 
   /* Typography */
   --font-display: "Manrope", sans-serif;
@@ -52,134 +52,137 @@
 @layer components {
   /* ── Level 1: Subtle glass (backgrounds, containers) ── */
   .glass-subtle {
-    background: rgba(230, 220, 255, 0.02);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   }
 
   /* ── Level 2: Standard glass (cards, panels) ── */
   .glass-panel {
-    background: rgba(230, 220, 255, 0.03);
-    backdrop-filter: blur(30px) saturate(200%);
-    -webkit-backdrop-filter: blur(30px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow:
-      0 10px 30px rgba(0, 0, 0, 0.4),
-      inset 0 1px 1px rgba(255, 255, 255, 0.12);
+      0 12px 35px rgba(0, 0, 0, 0.4),
+      inset 0 1px 1px rgba(255, 255, 255, 0.1);
   }
 
   /* ── Level 3: Heavy glass (prominent elements like sidemenu) ── */
   .glass-heavy {
-    background: rgba(230, 220, 255, 0.04);
-    backdrop-filter: blur(40px) saturate(250%);
-    -webkit-backdrop-filter: blur(40px) saturate(250%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(50px) saturate(150%);
+    -webkit-backdrop-filter: blur(50px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     box-shadow:
-      0 16px 40px rgba(0, 0, 0, 0.5),
-      inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      0 16px 45px rgba(0, 0, 0, 0.5),
+      inset 0 1px 1px rgba(255, 255, 255, 0.1);
   }
 
   /* ── Level 4: Ultra glass (hero elements, modals) ── */
   .glass-ultra {
-    background: linear-gradient(
-      135deg,
-      rgba(230, 220, 255, 0.05) 0%,
-      rgba(200, 180, 255, 0.02) 50%,
-      rgba(230, 220, 255, 0.04) 100%
-    );
-    backdrop-filter: blur(60px) saturate(250%);
-    -webkit-backdrop-filter: blur(60px) saturate(250%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(60px) saturate(150%);
+    -webkit-backdrop-filter: blur(60px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow:
-      0 20px 50px rgba(0, 0, 0, 0.5),
-      inset 0 1px 1px rgba(255, 255, 255, 0.2);
+      0 20px 60px rgba(0, 0, 0, 0.6),
+      inset 0 1px 1px rgba(255, 255, 255, 0.15);
   }
 
   /* ── Glass buttons ── */
   .glass-button {
-    background: rgba(230, 220, 255, 0.04);
-    backdrop-filter: blur(25px) saturate(200%);
-    -webkit-backdrop-filter: blur(25px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(30px) saturate(150%);
+    -webkit-backdrop-filter: blur(30px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.1),
+      0 4px 10px rgba(0, 0, 0, 0.2);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-button:hover {
-    background: rgba(139, 92, 246, 0.12);
-    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
     box-shadow:
-      0 0 20px rgba(139, 92, 246, 0.15),
-      0 0 40px rgba(139, 92, 246, 0.05);
+      0 0 20px rgba(255, 255, 255, 0.1),
+      0 8px 15px rgba(0, 0, 0, 0.3);
   }
 
   .glass-button-primary {
-    background: linear-gradient(
-      135deg,
-      rgba(139, 92, 246, 0.2),
-      rgba(244, 140, 37, 0.15)
-    );
+    background: rgba(124, 58, 237, 0.3); /* Violet */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(139, 92, 246, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+      0 6px 15px rgba(0, 0, 0, 0.3),
+      inset 0 1px 1px rgba(255, 255, 255, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-button-primary:hover {
-    background: linear-gradient(
-      135deg,
-      rgba(139, 92, 246, 0.3),
-      rgba(244, 140, 37, 0.25)
-    );
-    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(124, 58, 237, 0.5);
+    border-color: rgba(255, 255, 255, 0.4);
     box-shadow:
-      0 0 25px rgba(139, 92, 246, 0.2),
-      0 0 50px rgba(244, 140, 37, 0.1);
+      0 0 25px rgba(249, 115, 22, 0.4),
+      /* Orange glow */ 0 8px 20px rgba(0, 0, 0, 0.4);
   }
 
   /* ── Glass inputs ── */
   .glass-input {
-    background: rgba(230, 220, 255, 0.02);
+    background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(20px) saturate(150%);
     -webkit-backdrop-filter: blur(20px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow:
       inset 0 2px 4px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
   }
 
   .glass-input:focus {
-    background: rgba(139, 92, 246, 0.06);
-    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.4);
     box-shadow:
-      0 0 20px rgba(139, 92, 246, 0.1),
-      0 0 40px rgba(139, 92, 246, 0.05);
+      0 0 20px rgba(255, 255, 255, 0.1),
+      0 0 40px rgba(255, 255, 255, 0.05);
   }
 
   /* ── Glass badges/tags ── */
   .glass-badge {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    border-right: 1px solid rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   }
 
   .glass-badge-purple {
-    background: rgba(139, 92, 246, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    background: rgba(124, 58, 237, 0.2);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(124, 58, 237, 0.4);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   }
 
   .glass-badge-orange {
-    background: rgba(244, 140, 37, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(244, 140, 37, 0.2);
+    background: rgba(249, 115, 22, 0.2);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(249, 115, 22, 0.4);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   }
 
   /* ── Glass dividers ── */
   .glass-divider {
-    border-color: rgba(139, 92, 246, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
   }
 
   /* ── Landing page backward compat ── */
@@ -269,7 +272,11 @@
     inset: -2px;
     border-radius: 1.5rem;
     padding: 2px;
-    background: linear-gradient(135deg, #8b5cf6, #f48c25);
+    background: linear-gradient(
+      135deg,
+      #15803d,
+      #ffffff
+    ); /* opaque green, crisp white */
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
@@ -284,8 +291,8 @@
 
   .pro-glow-shadow {
     box-shadow:
-      0 0 40px -10px rgba(139, 92, 246, 0.3),
-      0 0 40px -10px rgba(244, 140, 37, 0.3);
+      0 0 30px -10px rgba(21, 128, 61, 0.4),
+      0 0 30px -10px rgba(255, 255, 255, 0.2);
   }
 
   .glass-panel-violet {
@@ -309,15 +316,15 @@
     background:
       radial-gradient(
         circle at 20% 20%,
-        rgba(139, 92, 246, 0.15),
+        rgba(21, 128, 61, 0.1),
         transparent 40%
       ),
       radial-gradient(
         circle at 80% 80%,
-        rgba(244, 140, 37, 0.12),
+        rgba(249, 115, 22, 0.12),
         transparent 40%
       ),
-      radial-gradient(circle at 50% 50%, rgba(7, 5, 10, 1), rgba(7, 5, 10, 1));
+      radial-gradient(circle at 50% 50%, rgba(3, 10, 22, 1), rgba(3, 10, 22, 1)); /* deep royal blue background base */
   }
 }
 
@@ -327,20 +334,20 @@
 
 .glow-purple {
   box-shadow:
-    0 0 20px rgba(139, 92, 246, 0.15),
-    0 0 60px rgba(139, 92, 246, 0.05);
+    0 0 20px rgba(124, 58, 237, 0.2),
+    /* Violet */ 0 0 60px rgba(124, 58, 237, 0.08);
 }
 
 .glow-orange {
   box-shadow:
-    0 0 20px rgba(244, 140, 37, 0.15),
-    0 0 60px rgba(244, 140, 37, 0.05);
+    0 0 20px rgba(249, 115, 22, 0.2),
+    /* Orange */ 0 0 60px rgba(249, 115, 22, 0.08);
 }
 
 .glow-mixed {
   box-shadow:
-    0 0 30px rgba(139, 92, 246, 0.1),
-    0 0 30px rgba(244, 140, 37, 0.08);
+    0 0 30px rgba(124, 58, 237, 0.15),
+    0 0 30px rgba(249, 115, 22, 0.15);
 }
 
 .gradient-bg {
@@ -369,6 +376,11 @@
 body {
   font-family: var(--font-display);
   background-color: var(--color-background-dark);
+  background-image: linear-gradient(
+    to bottom,
+    #000000 0%,
+    #000000 100%
+  ); /* New Deep blue liquid gradient base */
   color: #ffffff;
   transition:
     background-color 0.3s,
@@ -382,7 +394,7 @@ body {
 
 /* Button Utilities */
 .btn-primary {
-  @apply flex items-center justify-center rounded-2xl bg-accent-violet px-10 py-4 text-base font-bold text-white shadow-xl shadow-accent-violet/30 hover:bg-accent-violet/90 transition-all hover:scale-105;
+  @apply flex items-center justify-center rounded-2xl bg-primary px-10 py-4 text-base font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary/90 transition-all hover:scale-105;
 }
 
 .btn-gradient {
@@ -401,7 +413,7 @@ body {
 :root {
   --bg-primary: var(--color-background-dark);
   --text-primary: #ffffff;
-  --accent-color: var(--color-accent-violet);
+  --accent-color: var(--color-primary);
 }
 
 [data-theme="light"] {

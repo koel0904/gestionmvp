@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const sidebarLinks = [
-  { name: "Dashboard", icon: "dashboard", path: "/dashboard" },
+  { name: "Overview", icon: "space_dashboard", path: "/dashboard" },
   { name: "Settings", icon: "settings", path: "/dashboard/settings" },
 ];
 
@@ -19,13 +19,8 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="h-screen bg-background-dark font-display text-white flex p-4 gap-4 relative overflow-hidden">
-      {/* ── Ambient Background Orbs ── */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute w-[900px] h-[900px] -top-[250px] -left-[150px] rounded-full bg-[radial-gradient(circle,rgba(168,85,247,0.15)_0%,transparent_55%)] blur-[100px]" />
-        <div className="absolute w-[700px] h-[700px] bottom-[-200px] right-[-100px] rounded-full bg-[radial-gradient(circle,rgba(244,140,37,0.12)_0%,transparent_55%)] blur-[100px]" />
-        <div className="absolute w-[500px] h-[500px] top-[40%] left-[50%] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(192,80,200,0.08)_0%,transparent_60%)] blur-[80px]" />
-      </div>
+    <div className="h-screen font-display text-white flex p-4 gap-4 relative overflow-hidden">
+      {/* ── Removed Ambient Background Orbs to allow Liquid Glass effect over pure background ── */}
 
       {/* ══════════════════════════════════════ */}
       {/* SIDEBAR                              */}
@@ -36,21 +31,26 @@ export default function DashboardLayout() {
         }`}
       >
         <div className="flex flex-col h-full rounded-2xl overflow-hidden glass-heavy shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative">
-          {/* Top accent line */}
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-accent-violet via-primary to-accent-violet opacity-60" />
+          {/* Top accent line removed for cleaner glass effect */}
 
           {/* Logo */}
-          <div className="flex items-center gap-3 px-5 py-6 border-b border-white/[0.04]">
-            <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-accent-violet to-primary text-white shadow-lg shadow-accent-violet/30 shrink-0 glow-purple">
-              <span className="material-symbols-outlined text-[20px]">
+          <div className="flex items-center h-[88px] px-5 border-b border-white/[0.04] shrink-0 box-border overflow-hidden">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/30 to-accent-orange/20 text-white shadow-lg shadow-black/20 shrink-0 border border-white/20">
+              <span className="material-symbols-outlined text-[20px] text-transparent bg-clip-text bg-gradient-to-br from-accent-orange-light to-white drop-shadow-md">
                 business_center
               </span>
             </div>
-            {sidebarOpen && (
-              <span className="text-lg font-extrabold tracking-tight bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent truncate">
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap flex items-center ${
+                sidebarOpen
+                  ? "max-w-[150px] opacity-100 ml-3"
+                  : "max-w-0 opacity-0 ml-0"
+              }`}
+            >
+              <span className="text-lg font-extrabold tracking-tight bg-gradient-to-r from-accent-orange to-primary-light bg-clip-text text-transparent">
                 BizManage
               </span>
-            )}
+            </div>
           </div>
 
           {/* Navigation */}
@@ -61,52 +61,73 @@ export default function DashboardLayout() {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                  title={!sidebarOpen ? link.name : undefined}
+                  className={`flex items-center p-2 rounded-xl transition-all duration-300 group relative overflow-hidden box-border ${
                     isActive
-                      ? "bg-white/[0.08] text-white shadow-lg border border-white/10"
-                      : "text-white/60 hover:text-white hover:bg-white/[0.04] border border-transparent"
+                      ? "bg-white/[0.06] text-white shadow-lg border border-white/10"
+                      : "text-white/60 hover:text-white hover:bg-white/[0.03] border border-transparent"
                   }`}
                 >
                   {isActive && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-accent-violet/20 to-primary/10 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent pointer-events-none" />
                   )}
-                  <span
-                    className={`material-symbols-outlined text-[20px] shrink-0 relative z-10 ${
-                      isActive
-                        ? "text-accent-purple-light"
-                        : "text-white/40 group-hover:text-accent-violet/70"
+                  <div
+                    className={`w-10 h-10 flex items-center justify-center shrink-0 relative z-10 transition-transform group-hover:scale-110 ${!sidebarOpen && "mx-auto"}`}
+                  >
+                    <span
+                      className={`material-symbols-outlined transition-all duration-300 ${
+                        isActive
+                          ? "text-transparent bg-clip-text bg-gradient-to-br from-accent-orange to-primary drop-shadow-[0_0_8px_rgba(249,115,22,0.4)] scale-110"
+                          : "text-[22px] text-white/40 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-br group-hover:from-accent-orange group-hover:to-primary group-hover:drop-shadow-[0_0_8px_rgba(124,58,237,0.6)]"
+                      }`}
+                    >
+                      {link.icon}
+                    </span>
+                  </div>
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap flex items-center relative z-10 ${
+                      sidebarOpen
+                        ? "max-w-[160px] opacity-100 ml-2"
+                        : "max-w-0 opacity-0 ml-0"
                     }`}
                   >
-                    {link.icon}
-                  </span>
-                  {sidebarOpen && (
-                    <span className="text-sm font-semibold truncate relative z-10">
-                      {link.name}
-                    </span>
-                  )}
+                    <span className="text-sm font-semibold">{link.name}</span>
+                  </div>
                 </Link>
               );
             })}
           </nav>
 
           {/* User Section */}
-          <div className="border-t border-white/[0.04] p-4">
-            <div className="glass-subtle rounded-xl p-3 flex items-center gap-3 border border-white/[0.05]">
-              <div className="size-10 rounded-xl bg-gradient-to-br from-accent-violet/40 to-primary/30 border border-accent-violet/20 flex items-center justify-center text-white/90 shrink-0 glow-purple">
-                <span className="material-symbols-outlined text-[18px]">
-                  person
-                </span>
+          <div className="border-t border-white/[0.04] p-2 shrink-0 overflow-hidden box-border flex justify-center items-center h-[80px]">
+            <div
+              className={`glass-subtle rounded-xl flex items-center h-16 box-border transition-all duration-300 overflow-hidden ${
+                sidebarOpen ? "w-full" : "w-16 justify-center"
+              }`}
+            >
+              <div className="w-16 h-16 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/40 to-accent-orange/30 border border-white/20 flex items-center justify-center text-white/90 shadow-inner group-hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all duration-300">
+                  <span className="material-symbols-outlined text-[20px] text-white drop-shadow-md transition-transform group-hover:scale-110 group-hover:text-accent-orange-light">
+                    person
+                  </span>
+                </div>
               </div>
-              {sidebarOpen && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white truncate">
+              <div
+                className={`transition-all duration-300 ease-in-out flex flex-col justify-center overflow-hidden ${
+                  sidebarOpen
+                    ? "max-w-[180px] opacity-100"
+                    : "max-w-0 opacity-0"
+                }`}
+              >
+                <div className="w-[180px] pl-1 pr-3 text-left">
+                  <p className="text-sm font-bold text-white whitespace-normal leading-[1.15] break-words">
                     {user?.name || "User"}
                   </p>
-                  <p className="text-xs text-accent-purple-light truncate font-medium">
+                  <p className="text-[11px] text-primary-light mt-0.5 font-semibold truncate uppercase tracking-wider opacity-80">
                     {user?.role || "user"}
                   </p>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -122,10 +143,10 @@ export default function DashboardLayout() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="size-9 rounded-xl glass-button flex items-center justify-center text-white/70 hover:text-white cursor-pointer hover:shadow-[0_0_15px_rgba(139,92,246,0.2)]"
+                className="size-9 rounded-xl glass-button flex items-center justify-center text-white/70 hover:text-white cursor-pointer hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
               >
-                <span className="material-symbols-outlined text-[20px]">
-                  {sidebarOpen ? "menu_open" : "menu"}
+                <span className="material-symbols-outlined text-[20px] transition-transform">
+                  {sidebarOpen ? "keyboard_double_arrow_left" : "menu"}
                 </span>
               </button>
               <div className="h-5 w-px bg-white/10" />
@@ -135,12 +156,12 @@ export default function DashboardLayout() {
               </h1>
             </div>
             <div className="flex items-center gap-2">
-              <button className="size-9 rounded-xl glass-button flex items-center justify-center text-white/60 hover:text-white cursor-pointer hover:shadow-[0_0_15px_rgba(139,92,246,0.2)]">
+              <button className="size-9 rounded-xl glass-button flex items-center justify-center text-white/60 hover:text-white cursor-pointer hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]">
                 <span className="material-symbols-outlined text-[20px]">
                   notifications
                 </span>
               </button>
-              <button className="size-9 rounded-xl glass-button flex items-center justify-center text-white/60 hover:text-white cursor-pointer hover:shadow-[0_0_15px_rgba(139,92,246,0.2)]">
+              <button className="size-9 rounded-xl glass-button flex items-center justify-center text-white/60 hover:text-white cursor-pointer hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]">
                 <span className="material-symbols-outlined text-[20px]">
                   search
                 </span>
@@ -148,19 +169,21 @@ export default function DashboardLayout() {
               <div className="h-5 w-px bg-white/10 mx-1" />
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl glass-button text-white/60 hover:text-white cursor-pointer hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all text-sm font-semibold"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl glass-button text-white/60 hover:text-white cursor-pointer hover:bg-red-600 hover:border-red-400 hover:shadow-[0_0_20px_rgba(239,68,68,0.8),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300 text-sm font-medium group"
               >
-                <span className="material-symbols-outlined text-[18px]">
+                <span className="material-symbols-outlined text-[18px] group-hover:text-white transition-colors">
                   logout
                 </span>
-                <span className="hidden sm:inline">Logout</span>
+                <span className="hidden sm:inline group-hover:text-white transition-colors">
+                  Logout
+                </span>
               </button>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden rounded-2xl glass-subtle shadow-[0_4px_30px_rgba(0,0,0,0.2)]">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden rounded-2xl">
           <div className="p-6 min-h-full">
             <Outlet />
           </div>
