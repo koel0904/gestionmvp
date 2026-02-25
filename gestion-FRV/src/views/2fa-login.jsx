@@ -8,10 +8,12 @@ export default function TwoFALogin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { refresh } = useAuth();
-  const savedEmail = typeof window !== "undefined" ? localStorage.getItem("savedEmail") : "";
-  const initialEmail = (location.state && location.state.email) || savedEmail || "";
+  const savedEmail =
+    typeof window !== "undefined" ? localStorage.getItem("savedEmail") : "";
+  const initialEmail =
+    (location.state && location.state.email) || savedEmail || "";
 
-  const [email, setEmail] = useState(initialEmail);
+  const [email] = useState(initialEmail);
   const [passwordForResend, setPasswordForResend] = useState("");
   const [showPasswordForResend, setShowPasswordForResend] = useState(false);
 
@@ -76,7 +78,9 @@ export default function TwoFALogin() {
       return;
     }
     if (!email) {
-      setError("Email faltante. Vuelve a iniciar sesión y proporciona tu email.");
+      setError(
+        "Email faltante. Vuelve a iniciar sesión y proporciona tu email.",
+      );
       return;
     }
 
@@ -99,13 +103,16 @@ export default function TwoFALogin() {
         const refreshed = await refresh();
         if (!refreshed) {
           // If refresh failed, force a full /me fetch fallback or redirect to login
-          setError('No se pudo validar la sesión. Redirigiendo a inicio de sesión.');
-          setTimeout(() => navigate('/login'), 1000);
+          setError(
+            "No se pudo validar la sesión. Redirigiendo a inicio de sesión.",
+          );
+          setTimeout(() => navigate("/login"), 1000);
           return;
         }
       } catch (err) {
-        setError('Error validando la sesión.');
-        setTimeout(() => navigate('/login'), 1000);
+        console.error(err);
+        setError("Error validando la sesión.");
+        setTimeout(() => navigate("/login"), 1000);
         return;
       }
 
@@ -162,24 +169,42 @@ export default function TwoFALogin() {
       <div className="glass-card w-full max-w-md rounded-2xl p-8 md:p-10 relative shadow-glow">
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-white/10 mb-4">
-            <span className="material-symbols-outlined text-2xl text-white">vpn_key</span>
+            <span className="material-symbols-outlined text-2xl text-white">
+              vpn_key
+            </span>
           </div>
           <h2 className="text-2xl font-bold">Verificación en dos pasos</h2>
-          <p className="text-sm text-white/60 mt-1">Introduce el código de 6 dígitos enviado a tu correo.</p>
+          <p className="text-sm text-white/60 mt-1">
+            Introduce el código de 6 dígitos enviado a tu correo.
+          </p>
         </div>
 
-        {error && <div className="mb-4 text-sm text-red-300 bg-red-500/10 p-3 rounded">{error}</div>}
-        {successMsg && <div className="mb-4 text-sm text-green-200 bg-green-500/10 p-3 rounded">{successMsg}</div>}
+        {error && (
+          <div className="mb-4 text-sm text-red-300 bg-red-500/10 p-3 rounded">
+            {error}
+          </div>
+        )}
+        {successMsg && (
+          <div className="mb-4 text-sm text-green-200 bg-green-500/10 p-3 rounded">
+            {successMsg}
+          </div>
+        )}
 
         <form onSubmit={submitCode} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase text-white/70">Email</label>
+            <label className="text-xs font-semibold uppercase text-white/70">
+              Email
+            </label>
             <div className="glass-input w-full rounded-xl py-3 px-4 text-sm bg-black/20 border border-white/10 text-white flex items-center justify-between">
-              <span className="truncate">{email || <span className="text-white/40">(No email guardado)</span>}</span>
+              <span className="truncate">
+                {email || (
+                  <span className="text-white/40">(No email guardado)</span>
+                )}
+              </span>
               {!email && (
                 <button
                   type="button"
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate("/login")}
                   className="text-sm text-primary hover:underline"
                 >
                   Volver a iniciar sesión
@@ -190,7 +215,9 @@ export default function TwoFALogin() {
 
           {showPasswordForResend && (
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase text-white/70">Contraseña (necesaria para reenviar)</label>
+              <label className="text-xs font-semibold uppercase text-white/70">
+                Contraseña (necesaria para reenviar)
+              </label>
               <input
                 type="password"
                 value={passwordForResend}
@@ -201,7 +228,10 @@ export default function TwoFALogin() {
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-3 mt-2" onPaste={handlePaste}>
+          <div
+            className="flex items-center justify-center gap-3 mt-2"
+            onPaste={handlePaste}
+          >
             {code.map((digit, i) => (
               <input
                 key={i}
@@ -245,7 +275,10 @@ export default function TwoFALogin() {
           </div>
         </form>
 
-        <p className="mt-6 text-xs text-white/50 text-center">Si no recibes el correo revisa la carpeta de spam o espera unos minutos.</p>
+        <p className="mt-6 text-xs text-white/50 text-center">
+          Si no recibes el correo revisa la carpeta de spam o espera unos
+          minutos.
+        </p>
       </div>
     </div>
   );

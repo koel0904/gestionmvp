@@ -1,34 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useLocal } from "../../context/LocalContext";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [selectedLocal, setSelectedLocal] = useState(null);
+  const { selectedLocal, changeLocal, userLocales, loading } = useLocal();
 
-  // Sample locales data. In a full implementation this would come from the user's relations.
-  const userLocales = [
-    {
-      id: 1,
-      name: "Local 1",
-      address: "Main Headquarters",
-      role: user?.role || "admin",
-    },
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="size-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!selectedLocal) {
     return (
-      <LocalsGrid
-        locales={userLocales}
-        onSelect={setSelectedLocal}
-        user={user}
-      />
+      <LocalsGrid locales={userLocales} onSelect={changeLocal} user={user} />
     );
   }
 
   return (
     <LocalDetailView
       local={selectedLocal}
-      onBack={() => setSelectedLocal(null)}
+      onBack={() => changeLocal(null)}
       user={user}
     />
   );
@@ -109,10 +104,37 @@ function LocalsGrid({ locales, onSelect, user }) {
 }
 
 function LocalDetailView({ local, onBack }) {
+  const [stats, setStats] = useState({
+    revenue: 0,
+    orders: 0,
+    customers: 0,
+    products: 0,
+  });
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch(
+          `http://localhost:3000/api/locales/${local.id}/stats`,
+          {
+            credentials: "include",
+          },
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data.stats) setStats(data.stats);
+        }
+      } catch (err) {
+        console.error("Failed to fetch stats", err);
+      }
+    }
+    fetchStats();
+  }, [local.id]);
+
   const statCards = [
     {
       title: "Total Revenue",
-      value: "$0.00",
+      value: `$${(stats.revenue || 0).toFixed(2)}`,
       change: "+0%",
       icon: "payments",
       gradient: "from-primary/30 to-primary/10",
@@ -122,7 +144,7 @@ function LocalDetailView({ local, onBack }) {
     },
     {
       title: "Orders",
-      value: "0",
+      value: (stats.orders || 0).toString(),
       change: "+0%",
       icon: "shopping_bag",
       gradient: "from-white/20 to-white/5",
@@ -132,7 +154,7 @@ function LocalDetailView({ local, onBack }) {
     },
     {
       title: "Customers",
-      value: "0",
+      value: (stats.customers || 0).toString(),
       change: "+0%",
       icon: "group",
       gradient: "from-primary/20 to-primary/5",
@@ -142,8 +164,9 @@ function LocalDetailView({ local, onBack }) {
     },
     {
       title: "Products",
-      value: "0",
+      value: (stats.products || 0).toString(),
       change: "+0%",
+
       icon: "inventory_2",
       gradient: "from-blue-400/20 to-blue-300/5",
       iconColor: "text-blue-400 drop-shadow-md",
@@ -299,31 +322,6 @@ function LocalDetailView({ local, onBack }) {
               Your recent actions and events will appear here
             </p>
           </div>
-        </div>
-      </div>
-
-      {/* ── Business Info Bar ── */}
-      <div className="glass-panel rounded-2xl p-5 flex items-center justify-between border-t border-white/10">
-        <div className="flex items-center gap-4">
-          <div className="size-10 rounded-xl bg-gradient-to-br from-primary/30 to-primary-dark/20 glass-subtle flex items-center justify-center border border-white/20 shadow-inner">
-            <span className="material-symbols-outlined text-[20px] text-white drop-shadow-md">
-              domain
-            </span>
-          </div>
-          <div>
-            <p className="text-sm font-bold text-white">Current Environment</p>
-            <p className="text-xs text-white/50 font-medium">
-              {local.name} Workspace
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="glass-badge-purple px-3 py-1.5 rounded-lg text-xs font-semibold text-white capitalize">
-            {local.role}
-          </span>
-          <span className="glass-badge-purple px-3 py-1.5 rounded-lg text-xs font-semibold text-white">
-            Active
-          </span>
         </div>
       </div>
     </div>

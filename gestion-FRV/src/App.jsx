@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { LangProvider } from "./context/LangContext";
 import { AuthProvider } from "./context/AuthContext";
+import { LocalProvider } from "./context/LocalContext";
 import Layout from "./components/Layout";
 import DashboardRoutes from "./views/localDashboard/routes";
 import Home from "./views/Home";
@@ -35,7 +36,14 @@ function App() {
               <Route path="/login/2fa" element={<TwoFALogin />} />
 
               {/* Protected Dashboard Routes */}
-              {DashboardRoutes}
+              <Route
+                path="/dashboard/*"
+                element={
+                  <LocalProvider>
+                    <Routes>{DashboardRoutes}</Routes>
+                  </LocalProvider>
+                }
+              />
             </Routes>
           </AuthProvider>
         </Router>
