@@ -22,10 +22,17 @@ export function ThemeProvider({ children }) {
       document.documentElement.classList.remove("dark");
     }
     localStorage.setItem("theme", theme);
+    document.cookie = 'Theme=' + theme;
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  // Call with a value ("dark" | "light") to set explicitly,
+  // or without arguments to simply flip between the two.
+  const toggleTheme = (value) => {
+    if (value === "dark" || value === "light") {
+      setTheme(value);
+    } else {
+      setTheme((prev) => (prev === "light" ? "dark" : "light"));
+    }
   };
 
   return (

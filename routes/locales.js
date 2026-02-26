@@ -115,6 +115,18 @@ router.post("/locales/:id/proveedores", authenticateToken, async (req, res) => {
   }
 });
 
+router.put("/locales/:localId/proveedores/:id", authenticateToken, async (req, res) => {
+  try {
+    const proveedor = await localRepository.updateProveedor(
+      req.params.id,
+      req.body,
+    );
+    res.json({ message: "Proveedor actualizado con éxito", proveedor });
+  } catch (err) {
+    res.status(500).json({ error: "Error updating proveedor" });
+  }
+});
+
 router.post("/locales/:id/inventario", authenticateToken, async (req, res) => {
   try {
     const item = await localRepository.createInventario(
@@ -145,6 +157,18 @@ router.post("/locales/:id/ventas", authenticateToken, async (req, res) => {
     res.json({ message: "Venta registrada con éxito", venta });
   } catch (err) {
     res.status(500).json({ error: "Error creating venta" });
+  }
+});
+
+router.put("/locales/:localId/ventas/:id", authenticateToken, async (req, res) => {
+  try {
+    const venta = await localRepository.updateVenta(req.params.id, req.body);
+    res.json({ message: "Venta actualizada con éxito", venta });
+  } catch (err) {
+    if (err.message === "Inventario item not found") {
+      return res.status(400).json({ error: err.message });
+    }
+    res.status(500).json({ error: "Error updating venta" });
   }
 });
 

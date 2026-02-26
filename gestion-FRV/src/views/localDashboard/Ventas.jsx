@@ -3,6 +3,7 @@ import { useLocal } from "../../context/LocalContext";
 import { Link } from "react-router-dom";
 import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
+import EditForm from "../../components/EditForm";
 
 export default function Ventas() {
   const { selectedLocal } = useLocal();
@@ -24,6 +25,22 @@ export default function Ventas() {
     clienteId: "",
     cantidad: 1,
   });
+
+  // Edit state
+  const [editingVenta, setEditingVenta] = useState(null);
+
+  const handleEditSuccess = async () => {
+    // Re-fetch to get nested relations right (cliente name, etc.)
+    try {
+      const res = await fetch(`http://localhost:3000/api/locales/${selectedLocal.id}/ventas`, {
+        credentials: "include"
+      });
+      if (res.ok) setVentas(await res.json());
+    } catch (e) { console.error(e); }
+
+    setEditingVenta(null);
+    showToast("Venta actualizada exitosamente");
+  };
 
   useEffect(() => {
     if (!selectedLocal) return;
@@ -293,9 +310,13 @@ export default function Ventas() {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right align-middle">
-                      <button className="p-2 rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-colors">
+                      <button
+                        onClick={() => setEditingVenta(v)}
+                        className="p-2 rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                        title="Edit Sale"
+                      >
                         <span className="material-symbols-outlined text-[20px]">
-                          more_vert
+                          edit
                         </span>
                       </button>
                     </td>
@@ -415,6 +436,30 @@ export default function Ventas() {
             </button>
           </div>
         </form>
+      </GlassModal>
+
+      <GlassModal
+        isOpen={!!editingVenta}
+        onClose={() => setEditingVenta(null)}
+      >
+        {editingVenta && (
+          <div className="-mx-6 -my-6">
+            {/* The EditForm auto-generates inputs for each key in data.
+                We only want to expose these specific fields to edit. */}
+            <EditForm
+              title={`Edit Sale #${editingVenta.id.toString().padStart(4, "0")}`}
+              data={{
+                inventarioId: editingVenta.inventarioId,
+                clienteId: editingVenta.clienteId || "",
+                cantidad: editingVenta.cantidad,
+              }}
+              apiUrl={`/locales/${selectedLocal.id}/ventas/${editingVenta.id}`}
+              method="PUT"
+              onSuccess={handleEditSuccess}
+              onCancel={() => setEditingVenta(null)}
+            />
+          </div>
+        )}
       </GlassModal>
 
       <GlassToast

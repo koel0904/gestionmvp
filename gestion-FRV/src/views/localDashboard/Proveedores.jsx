@@ -3,6 +3,7 @@ import { useLocal } from "../../context/LocalContext";
 import { Link } from "react-router-dom";
 import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
+import EditForm from "../../components/EditForm";
 
 export default function Proveedores() {
   const { selectedLocal } = useLocal();
@@ -23,6 +24,19 @@ export default function Proveedores() {
   // Form state
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Edit state
+  const [editingProveedor, setEditingProveedor] = useState(null);
+
+  const handleEditSuccess = (updatedData) => {
+    setProveedores((prev) =>
+      prev.map((p) =>
+        p.id === updatedData.proveedor.id ? updatedData.proveedor : p
+      )
+    );
+    setEditingProveedor(null);
+    showToast("Proveedor actualizado exitosamente");
+  };
 
   useEffect(() => {
     if (!selectedLocal) return;
@@ -251,9 +265,13 @@ export default function Proveedores() {
                       </div>
                     </td>
                     <td className="py-4 px-4 text-right align-middle">
-                      <button className="p-2 rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-colors">
+                      <button
+                        onClick={() => setEditingProveedor(p)}
+                        className="p-2 rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                        title="Edit Supplier"
+                      >
                         <span className="material-symbols-outlined text-[20px]">
-                          more_vert
+                          edit
                         </span>
                       </button>
                     </td>
@@ -332,6 +350,28 @@ export default function Proveedores() {
             </button>
           </div>
         </form>
+      </GlassModal>
+
+      <GlassModal
+        isOpen={!!editingProveedor}
+        onClose={() => setEditingProveedor(null)}
+      >
+        {editingProveedor && (
+          <div className="-mx-6 -my-6">
+            <EditForm
+              title={`Edit ${editingProveedor.name}`}
+              data={{
+                name: editingProveedor.name,
+                email: editingProveedor.email || "",
+                phone: editingProveedor.phone || "",
+              }}
+              apiUrl={`/locales/${selectedLocal.id}/proveedores/${editingProveedor.id}`}
+              method="PUT"
+              onSuccess={handleEditSuccess}
+              onCancel={() => setEditingProveedor(null)}
+            />
+          </div>
+        )}
       </GlassModal>
 
       <GlassToast

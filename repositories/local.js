@@ -115,6 +115,17 @@ class localRepository {
     });
   }
 
+  static async updateProveedor(id, data) {
+    return prisma.proveedores.update({
+      where: { id: parseInt(id, 10) },
+      data: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+      },
+    });
+  }
+
   static async createUsuario(localId, data) {
     const saltRounds = parseInt(process.env.SALT) || 10;
     const hashedPassword = await bcrypt.hash(data.password, saltRounds);
@@ -165,6 +176,31 @@ class localRepository {
         inventarioId: parseInt(data.inventarioId, 10),
         localId: parseInt(localId, 10),
       },
+    });
+  }
+
+  static async updateVenta(id, data) {
+    // We only update cantidad, precio is pulled from inventario item.
+    // Ensure we have an inventario ID to get price from
+    const invId = parseInt(data.inventarioId, 10);
+    const item = await prisma.inventario.findUnique({ where: { id: invId } });
+
+    if (!item) throw new Error("Inventario item not found");
+
+    const qty = parseInt(data.cantidad, 10);
+
+    return prisma.ventas.update({
+      where: { id: parseInt(id, 10) },
+      data: {
+        cantidad: qty,
+        precio_venta: item.precio_venta,
+        total: qty * item.precio_venta,
+        clienteId: parseInt(data.clienteId, 10),
+        inventarioId: invId,
+      },
+      include: {
+        cliente: { select: { name: true, email: true } },
+      }
     });
   }
 }

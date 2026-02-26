@@ -55,7 +55,7 @@ router.post("/login/2fa", async (req, res) => {
       httpOnly: true,
       secure: false,
       sameSite: "strict",
-      maxAge: 3600000,
+      maxAge: 132000 * 60 * 60, // 132 hours
     });
 
     res.json({ message: "Login successful" });
