@@ -3,6 +3,9 @@ import login from "./routes/login.js";
 import register from "./routes/register.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+// solo con importarlo se inicia el servidor de web sockets
+import wss from "./ws.js";
+
 
 import locales from "./routes/locales.js";
 
@@ -29,3 +32,5 @@ app.use("/api", login, register, locales);
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
 });
+
+

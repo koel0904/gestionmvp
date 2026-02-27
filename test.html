@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cliente WebSocket</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        #mensajes {
+            border: 1px solid #ccc;
+            height: 200px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .msg {
+            margin-bottom: 5px;
+            padding: 5px;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Prueba de WebSockets (Túneles)</h2>
+    <div style="margin-bottom: 10px;">
+        <input type="text" id="inputTunnel" placeholder="ID del túnel (ej. local_1)" value="local_1" />
+        <button onclick="unirseAlTunel()">Unirse al Túnel</button>
+    </div>
+    <div id="mensajes"></div>
+    <input type="text" id="inputMensaje" placeholder="Escribe un mensaje..." />
+    <button onclick="enviarMensaje()">Enviar al Túnel</button>
+
+    <script>
+        const cajaMensajes = document.getElementById('mensajes');
+        const inputMensaje = document.getElementById('inputMensaje');
+        const inputTunnel = document.getElementById('inputTunnel');
+
+        let currentTunnel = null;
+        let socket = null;
+
+        function conectar() {
+            socket = new WebSocket('ws://localhost:8080');
+
+            socket.addEventListener('open', () => {
+                agregarMensaje('🟢 Conectado al servidor WebSocket');
+                unirseAlTunel(); // Unirse por defecto al cargar
+            });
+
+            socket.addEventListener('message', (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.tunnel) {
+                        agregarMensaje(`⬇️ [${msg.tunnel}] Alguien dice: ` + msg.data);
+                    }
+                } catch (e) {
+                    agregarMensaje('⬇️ (Texto plano): ' + event.data);
+                }
+            });
+
+            socket.addEventListener('close', () => {
+                agregarMensaje('🔴 Desconectado del servidor');
+                currentTunnel = null;
+            });
+        }
+
+        function unirseAlTunel() {
+            if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+            const tunnelId = inputTunnel.value;
+            if (tunnelId) {
+                currentTunnel = tunnelId;
+                socket.send(JSON.stringify({
+                    type: "join",
+                    tunnel: currentTunnel
+                }));
+                agregarMensaje(`🔄 Te has unido al túnel: ${currentTunnel}`);
+            }
+        }
+
+        function enviarMensaje() {
+            if (!currentTunnel) {
+                alert("Primero únete a un túnel!");
+                return;
+            }
+
+            const texto = inputMensaje.value;
+            if (texto && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: "message",
+                    tunnel: currentTunnel,
+                    data: texto
+                }));
+                agregarMensaje(`⬆️ [${currentTunnel}] Tú: ` + texto);
+                inputMensaje.value = '';
+            }
+        }
+
+        function agregarMensaje(texto) {
+            const div = document.createElement('div');
+            div.className = 'msg';
+            div.textContent = texto;
+            cajaMensajes.appendChild(div);
+            cajaMensajes.scrollTop = cajaMensajes.scrollHeight;
+        }
+
+        // Conectar al cargar la página
+        conectar();
+    </script>
+</body>
+
+</html>
