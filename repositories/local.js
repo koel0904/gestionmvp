@@ -155,11 +155,37 @@ class localRepository {
     });
   }
 
+  static async updateInventario(id, data) {
+    return prisma.inventario.update({
+      where: { id: parseInt(id, 10) },
+      data: {
+        name: data.name,
+        precio_compra: parseFloat(data.precio_compra),
+        precio_venta: parseFloat(data.precio_venta),
+        stock: parseInt(data.stock, 10),
+      },
+      include: {
+        proveedor: { select: { name: true } },
+      },
+    });
+  }
+
   static async createCliente(localId, data) {
     return prisma.clientes.create({
       data: {
         ...data,
         localId: parseInt(localId, 10),
+      },
+    });
+  }
+
+  static async updateCliente(id, data) {
+    return prisma.clientes.update({
+      where: { id: parseInt(id, 10) },
+      data: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
       },
     });
   }
@@ -200,7 +226,68 @@ class localRepository {
       },
       include: {
         cliente: { select: { name: true, email: true } },
-      }
+      },
+    });
+  }
+
+  static async deleteProveedor(id) {
+    const provId = parseInt(id, 10);
+    // Find all inventory items for this provider
+    const inventarioItems = await prisma.inventario.findMany({
+      where: { proveedorId: provId },
+      select: { id: true },
+    });
+
+    const invIds = inventarioItems.map((item) => item.id);
+
+    // Delete all ventas associated with these inventory items
+    if (invIds.length > 0) {
+      await prisma.ventas.deleteMany({
+        where: { inventarioId: { in: invIds } },
+      });
+
+      // Delete all inventory items for this provider
+      await prisma.inventario.deleteMany({
+        where: { proveedorId: provId },
+      });
+    }
+
+    return prisma.proveedores.delete({
+      where: { id: provId },
+    });
+  }
+
+  static async deleteUsuario(id) {
+    return prisma.user.delete({
+      where: { id: parseInt(id, 10) },
+    });
+  }
+
+  static async deleteInventario(id) {
+    const invId = parseInt(id, 10);
+    // Remove ventas that reference this inventory item first
+    await prisma.ventas.deleteMany({
+      where: { inventarioId: invId },
+    });
+    return prisma.inventario.delete({
+      where: { id: invId },
+    });
+  }
+
+  static async deleteCliente(id) {
+    const clienteId = parseInt(id, 10);
+    // Remove ventas that reference this client first
+    await prisma.ventas.deleteMany({
+      where: { clienteId: clienteId },
+    });
+    return prisma.clientes.delete({
+      where: { id: clienteId },
+    });
+  }
+
+  static async deleteVenta(id) {
+    return prisma.ventas.delete({
+      where: { id: parseInt(id, 10) },
     });
   }
 }

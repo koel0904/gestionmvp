@@ -3,6 +3,8 @@ import { useLocal } from "../../context/LocalContext";
 import { Link } from "react-router-dom";
 import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
+import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
+import EditForm from "../../components/EditForm";
 
 export default function Clientes() {
   const { selectedLocal } = useLocal();
@@ -18,6 +20,48 @@ export default function Clientes() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
+
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [editingCliente, setEditingCliente] = useState(null);
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/locales/${selectedLocal.id}/clientes/${deleteConfirm}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+      if (res.ok) {
+        setClientes((prev) => prev.filter((c) => c.id !== deleteConfirm));
+        showToast("Cliente eliminado exitosamente");
+      } else {
+        const err = await res.json();
+        showToast(err.error || "Error al eliminar cliente", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error de red al eliminar", "error");
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirm(null);
+    }
+  };
+
+  const handleEditSuccess = (updatedData) => {
+    setClientes((prev) =>
+      prev.map((c) =>
+        c.id === updatedData.cliente.id ? updatedData.cliente : c,
+      ),
+    );
+    setEditingCliente(null);
+    showToast("Cliente actualizado exitosamente");
+  };
 
   useEffect(() => {
     if (!selectedLocal) return;
@@ -253,11 +297,26 @@ export default function Clientes() {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right align-middle">
-                      <button className="p-2 rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-colors">
-                        <span className="material-symbols-outlined text-[20px]">
-                          more_vert
-                        </span>
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setEditingCliente(c)}
+                          className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-sky-500/20 hover:border-sky-400 border border-transparent hover:shadow-[0_0_20px_rgba(56,189,248,0.5),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
+                          title="Editar"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">
+                            edit
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(c.id)}
+                          className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-red-600 hover:border-red-400 border border-transparent hover:shadow-[0_0_20px_rgba(239,68,68,0.8),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
+                          title="Eliminar"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">
+                            delete
+                          </span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -336,11 +395,40 @@ export default function Clientes() {
         </form>
       </GlassModal>
 
+      <GlassModal
+        isOpen={!!editingCliente}
+        onClose={() => setEditingCliente(null)}
+      >
+        {editingCliente && (
+          <div className="-mx-6 -my-6">
+            <EditForm
+              title={`Edit ${editingCliente.name}`}
+              data={{
+                name: editingCliente.name,
+                email: editingCliente.email || "",
+                phone: editingCliente.phone || "",
+              }}
+              apiUrl={`/locales/${selectedLocal.id}/clientes/${editingCliente.id}`}
+              method="PUT"
+              onSuccess={handleEditSuccess}
+              onCancel={() => setEditingCliente(null)}
+            />
+          </div>
+        )}
+      </GlassModal>
+
       <GlassToast
         visible={toast.visible}
         message={toast.message}
         type={toast.type}
         onClose={() => setToast({ ...toast, visible: false })}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

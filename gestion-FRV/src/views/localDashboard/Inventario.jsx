@@ -3,6 +3,8 @@ import { useLocal } from "../../context/LocalContext";
 import { Link } from "react-router-dom";
 import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
+import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
+import EditForm from "../../components/EditForm";
 
 export default function Inventario() {
   const { selectedLocal } = useLocal();
@@ -25,6 +27,56 @@ export default function Inventario() {
     stock: "",
     proveedorId: "",
   });
+
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [editingItem, setEditingItem] = useState(null);
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/locales/${selectedLocal.id}/inventario/${deleteConfirm}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+      if (res.ok) {
+        setInventario((prev) => prev.filter((i) => i.id !== deleteConfirm));
+        showToast("Producto eliminado exitosamente");
+      } else {
+        const err = await res.json();
+        showToast(err.error || "Error al eliminar producto", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error de red al eliminar", "error");
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirm(null);
+    }
+  };
+
+  const handleEditSuccess = async () => {
+    // Re-fetch to get correct relation names
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/locales/${selectedLocal.id}/inventario`,
+        { credentials: "include" },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setInventario(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setEditingItem(null);
+    showToast("Producto actualizado exitosamente");
+  };
 
   useEffect(() => {
     if (!selectedLocal) return;
@@ -282,11 +334,26 @@ export default function Inventario() {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right align-middle">
-                      <button className="p-2 rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-colors">
-                        <span className="material-symbols-outlined text-[20px]">
-                          more_vert
-                        </span>
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setEditingItem(item)}
+                          className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-sky-500/20 hover:border-sky-400 border border-transparent hover:shadow-[0_0_20px_rgba(56,189,248,0.5),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
+                          title="Editar"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">
+                            edit
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(item.id)}
+                          className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-red-600 hover:border-red-400 border border-transparent hover:shadow-[0_0_20px_rgba(239,68,68,0.8),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
+                          title="Eliminar"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">
+                            delete
+                          </span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -420,11 +487,38 @@ export default function Inventario() {
         </form>
       </GlassModal>
 
+      <GlassModal isOpen={!!editingItem} onClose={() => setEditingItem(null)}>
+        {editingItem && (
+          <div className="-mx-6 -my-6">
+            <EditForm
+              title={`Edit ${editingItem.name}`}
+              data={{
+                name: editingItem.name,
+                precio_compra: editingItem.precio_compra,
+                precio_venta: editingItem.precio_venta,
+                stock: editingItem.stock,
+              }}
+              apiUrl={`/locales/${selectedLocal.id}/inventario/${editingItem.id}`}
+              method="PUT"
+              onSuccess={handleEditSuccess}
+              onCancel={() => setEditingItem(null)}
+            />
+          </div>
+        )}
+      </GlassModal>
+
       <GlassToast
         visible={toast.visible}
         message={toast.message}
         type={toast.type}
         onClose={() => setToast({ ...toast, visible: false })}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

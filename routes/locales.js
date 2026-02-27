@@ -115,17 +115,21 @@ router.post("/locales/:id/proveedores", authenticateToken, async (req, res) => {
   }
 });
 
-router.put("/locales/:localId/proveedores/:id", authenticateToken, async (req, res) => {
-  try {
-    const proveedor = await localRepository.updateProveedor(
-      req.params.id,
-      req.body,
-    );
-    res.json({ message: "Proveedor actualizado con éxito", proveedor });
-  } catch (err) {
-    res.status(500).json({ error: "Error updating proveedor" });
-  }
-});
+router.put(
+  "/locales/:localId/proveedores/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const proveedor = await localRepository.updateProveedor(
+        req.params.id,
+        req.body,
+      );
+      res.json({ message: "Proveedor actualizado con éxito", proveedor });
+    } catch (err) {
+      res.status(500).json({ error: "Error updating proveedor" });
+    }
+  },
+);
 
 router.post("/locales/:id/inventario", authenticateToken, async (req, res) => {
   try {
@@ -139,6 +143,22 @@ router.post("/locales/:id/inventario", authenticateToken, async (req, res) => {
   }
 });
 
+router.put(
+  "/locales/:localId/inventario/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const item = await localRepository.updateInventario(
+        req.params.id,
+        req.body,
+      );
+      res.json({ message: "Producto actualizado con éxito", item });
+    } catch (err) {
+      res.status(500).json({ error: "Error updating inventario item" });
+    }
+  },
+);
+
 router.post("/locales/:id/clientes", authenticateToken, async (req, res) => {
   try {
     const cliente = await localRepository.createCliente(
@@ -151,6 +171,22 @@ router.post("/locales/:id/clientes", authenticateToken, async (req, res) => {
   }
 });
 
+router.put(
+  "/locales/:localId/clientes/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const cliente = await localRepository.updateCliente(
+        req.params.id,
+        req.body,
+      );
+      res.json({ message: "Cliente actualizado con éxito", cliente });
+    } catch (err) {
+      res.status(500).json({ error: "Error updating cliente" });
+    }
+  },
+);
+
 router.post("/locales/:id/ventas", authenticateToken, async (req, res) => {
   try {
     const venta = await localRepository.createVenta(req.params.id, req.body);
@@ -160,16 +196,87 @@ router.post("/locales/:id/ventas", authenticateToken, async (req, res) => {
   }
 });
 
-router.put("/locales/:localId/ventas/:id", authenticateToken, async (req, res) => {
-  try {
-    const venta = await localRepository.updateVenta(req.params.id, req.body);
-    res.json({ message: "Venta actualizada con éxito", venta });
-  } catch (err) {
-    if (err.message === "Inventario item not found") {
-      return res.status(400).json({ error: err.message });
+router.put(
+  "/locales/:localId/ventas/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const venta = await localRepository.updateVenta(req.params.id, req.body);
+      res.json({ message: "Venta actualizada con éxito", venta });
+    } catch (err) {
+      if (err.message === "Inventario item not found") {
+        return res.status(400).json({ error: err.message });
+      }
+      res.status(500).json({ error: "Error updating venta" });
     }
-    res.status(500).json({ error: "Error updating venta" });
-  }
-});
+  },
+);
+
+// ==== DELETE ROUTES ====
+
+router.delete(
+  "/locales/:localId/proveedores/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await localRepository.deleteProveedor(req.params.id);
+      res.json({ message: "Proveedor eliminado con éxito" });
+    } catch (err) {
+      res.status(500).json({ error: "Error deleting proveedor" });
+    }
+  },
+);
+
+router.delete(
+  "/locales/:localId/usuarios/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await localRepository.deleteUsuario(req.params.id);
+      res.json({ message: "Usuario eliminado con éxito" });
+    } catch (err) {
+      res.status(500).json({ error: "Error deleting usuario" });
+    }
+  },
+);
+
+router.delete(
+  "/locales/:localId/inventario/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await localRepository.deleteInventario(req.params.id);
+      res.json({ message: "Item eliminado con éxito" });
+    } catch (err) {
+      res.status(500).json({ error: "Error deleting inventario item" });
+    }
+  },
+);
+
+router.delete(
+  "/locales/:localId/clientes/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await localRepository.deleteCliente(req.params.id);
+      res.json({ message: "Cliente eliminado con éxito" });
+    } catch (err) {
+      res.status(500).json({ error: "Error deleting cliente" });
+    }
+  },
+);
+
+router.delete(
+  "/locales/:localId/ventas/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await localRepository.deleteVenta(req.params.id);
+      res.json({ message: "Venta eliminada con éxito" });
+    } catch (err) {
+      res.status(500).json({ error: "Error deleting venta" });
+    }
+  },
+);
 
 export default router;
