@@ -16,11 +16,14 @@ datasource db {
 
 
 model Local {
-  id      Int    @id @default(autoincrement())
+  id      String @id @default(uuid())
   name    String
   address String?
   phone   String?
   email   String?
+
+  ownerId String
+  owner   Owner @relation(fields: [ownerId], references: [id])
 
   users       User[]
   proveedores Proveedores[]
@@ -30,7 +33,7 @@ model Local {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   name        String
   email       String   @unique
   phone       String?
@@ -40,67 +43,82 @@ model User {
   twoFactorCode  String? @db.VarChar(255)
   twoFactorCodeExpiry DateTime?
 
+  localId  String?
   local    Local? @relation(fields: [localId], references: [id])
-  localId  Int?
 
-  master      User?    @relation("MasterSubusers", fields: [masterId], references: [id])
-  masterId    Int?     @unique
-  subusers    User[]   @relation("MasterSubusers")
+  ownerId  String
+  owner    Owner @relation(fields: [ownerId], references: [id])
 }
 
-model Proveedores {
-  id      Int     @id @default(autoincrement())
+model Owner {
+  id      String  @id @default(uuid())
   name    String
   email   String  @unique
   phone   String?
+  password    String   @db.VarChar(255)
+  role        String   @default("owner")
+  permissions Json     @default("[]")
+  twoFactorCode  String? @db.VarChar(255)
+  twoFactorCodeExpiry DateTime?
+
+  users  User[]
+  locales Local[]
+}
+
+model Proveedores {
+  id      String  @id @default(uuid())
+  name    String
+  email   String?
+  phone   String?
   
   local   Local   @relation(fields: [localId], references: [id])
-  localId Int
+  localId String
 
   inventario Inventario[]
 }
 
 model Inventario {
-  id            Int     @id @default(autoincrement())
+  id            String  @id @default(uuid())
   name          String
   precio_compra Float
   precio_venta  Float
   stock         Int
   
   proveedor   Proveedores @relation(fields: [proveedorId], references: [id])
-  proveedorId Int
+  proveedorId String
   
   local   Local   @relation(fields: [localId], references: [id])
-  localId Int
+  localId String
 
   ventas Ventas[]
 }
 
 model Clientes {
-  id    Int     @id @default(autoincrement())
+  id    String  @id @default(uuid())
   name  String
   email String  @unique
   phone String?
 
   local   Local   @relation(fields: [localId], references: [id])
-  localId Int
+  localId String
 
   ventas Ventas[]
 }
 
 model Ventas {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(uuid())
   cantidad     Int
   precio_venta Float
   total        Float
   fecha        DateTime @default(now())
   
   cliente   Clientes @relation(fields: [clienteId], references: [id])
-  clienteId Int
+  clienteId String
   
   inventario   Inventario @relation(fields: [inventarioId], references: [id])
-  inventarioId Int
+  inventarioId String
 
   local   Local   @relation(fields: [localId], references: [id])
-  localId Int
+  localId String
 }
+

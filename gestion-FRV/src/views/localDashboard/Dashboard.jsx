@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useLocal } from "../../context/LocalContext";
+import GlassToast from "../../components/GlassToast";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -30,12 +31,72 @@ export default function Dashboard() {
 }
 
 function LocalsGrid({ locales, onSelect, user }) {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
+  const { setUserLocales } = useLocal();
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
+  });
+
+  const isOwner = user?.role === "owner";
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleCreateLocal = async (e) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      setToast({
+        visible: true,
+        message: "El nombre del local es obligatorio",
+        type: "error",
+      });
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const res = await fetch("http://localhost:3000/api/locales", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Error creando el local");
+      }
+
+      // Add the new local to the list with owner role
+      setUserLocales((prev) => [...prev, { ...data.local, role: "owner" }]);
+      setFormData({ name: "", address: "", phone: "", email: "" });
+      setShowCreateForm(false);
+      setToast({
+        visible: true,
+        message: "¡Local creado con éxito!",
+        type: "success",
+      });
+    } catch (err) {
+      setToast({ visible: true, message: err.message, type: "error" });
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* ── Welcome Banner ── */}
       <div className="glass-ultra rounded-2xl p-8 relative overflow-hidden">
-        {/* Top accent line removed for cleaner glass effect */}
-
         <div className="relative z-10">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
             Workspaces Overview
@@ -87,18 +148,168 @@ function LocalsGrid({ locales, onSelect, user }) {
           </button>
         ))}
 
-        {/* Create New Local Placeholder */}
-        <button className="glass-panel border-dashed border-2 border-white/10 rounded-2xl p-6 hover:bg-white/[0.02] transition-all duration-300 group flex flex-col items-center justify-center min-h-[200px] cursor-pointer">
-          <div className="size-12 rounded-xl glass-subtle flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <span className="material-symbols-outlined text-[24px] text-white/50 group-hover:text-white">
-              add
-            </span>
-          </div>
-          <h3 className="text-sm font-bold text-white/70 group-hover:text-white transition-colors">
-            Register New Location
-          </h3>
-        </button>
+        {/* Create New Local Button (Owner only) */}
+        {isOwner && (
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="glass-panel border-dashed border-2 border-white/10 rounded-2xl p-6 hover:bg-white/[0.02] hover:border-primary/30 transition-all duration-300 group flex flex-col items-center justify-center min-h-[200px] cursor-pointer"
+          >
+            <div className="size-12 rounded-xl glass-subtle flex items-center justify-center mb-4 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all duration-300">
+              <span className="material-symbols-outlined text-[24px] text-white/50 group-hover:text-primary-light transition-colors">
+                add
+              </span>
+            </div>
+            <h3 className="text-sm font-bold text-white/70 group-hover:text-white transition-colors">
+              Registrar Nuevo Local
+            </h3>
+            <p className="text-xs text-white/40 mt-1">Solo owners</p>
+          </button>
+        )}
       </div>
+
+      {/* ── Create Local Modal ── */}
+      {showCreateForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowCreateForm(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative z-10 w-full max-w-lg glass-heavy rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            {/* Top accent */}
+            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary-light/60 to-transparent" />
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06]">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-xl bg-gradient-to-br from-primary/30 to-accent-orange/20 flex items-center justify-center border border-white/20">
+                  <span className="material-symbols-outlined text-[20px] text-primary-light">
+                    add_business
+                  </span>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Nuevo Local</h2>
+                  <p className="text-xs text-white/50 font-medium">
+                    Registra una nueva ubicación
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCreateForm(false)}
+                className="size-9 rounded-xl glass-button flex items-center justify-center text-white/50 hover:text-white transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  close
+                </span>
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleCreateLocal} className="p-6 space-y-4">
+              {/* Name (required) */}
+              <div>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-1.5">
+                  Nombre del local <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Ej: Sucursal Centro"
+                  required
+                  className="w-full px-4 py-3 rounded-xl glass-subtle border border-white/10 focus:border-primary/50 focus:outline-none focus:shadow-[0_0_15px_rgba(124,58,237,0.2)] bg-transparent text-white text-sm font-medium placeholder:text-white/30 transition-all"
+                />
+              </div>
+
+              {/* Address */}
+              <div>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-1.5">
+                  Dirección
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Ej: Av. Principal #123"
+                  className="w-full px-4 py-3 rounded-xl glass-subtle border border-white/10 focus:border-primary/50 focus:outline-none focus:shadow-[0_0_15px_rgba(124,58,237,0.2)] bg-transparent text-white text-sm font-medium placeholder:text-white/30 transition-all"
+                />
+              </div>
+
+              {/* Phone & Email row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-1.5">
+                    Teléfono
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="Ej: 555-1234"
+                    className="w-full px-4 py-3 rounded-xl glass-subtle border border-white/10 focus:border-primary/50 focus:outline-none focus:shadow-[0_0_15px_rgba(124,58,237,0.2)] bg-transparent text-white text-sm font-medium placeholder:text-white/30 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-1.5">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Ej: local@email.com"
+                    className="w-full px-4 py-3 rounded-xl glass-subtle border border-white/10 focus:border-primary/50 focus:outline-none focus:shadow-[0_0_15px_rgba(124,58,237,0.2)] bg-transparent text-white text-sm font-medium placeholder:text-white/30 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="px-5 py-2.5 rounded-xl glass-button text-white/60 hover:text-white text-sm font-semibold transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-bold shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
+                >
+                  {creating ? (
+                    <>
+                      <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Creando...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[18px]">
+                        add
+                      </span>
+                      Crear Local
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Toast notification */}
+      <GlassToast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+        onClose={() => setToast((prev) => ({ ...prev, visible: false }))}
+      />
     </div>
   );
 }

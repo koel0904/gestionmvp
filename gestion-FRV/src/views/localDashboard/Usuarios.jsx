@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocal } from "../../context/LocalContext";
+import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
@@ -7,8 +8,11 @@ import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
 
 export default function Usuarios() {
   const { selectedLocal } = useLocal();
+  const { user: currentUser } = useAuth();
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const isOwner = currentUser?.role === "owner";
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,9 +29,61 @@ export default function Usuarios() {
     password: "",
     role: "user",
   });
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Edit state
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Start editing a user
+  const startEdit = (u) => {
+    setEditingId(u.id);
+    setEditData({
+      name: u.name,
+      email: u.email,
+      phone: u.phone || "",
+      role: u.role,
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditData({});
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    setIsSaving(true);
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/locales/${selectedLocal.id}/usuarios/${editingId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(editData),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Error al actualizar usuario");
+      }
+      setUsuarios((prev) =>
+        prev.map((u) => (u.id === editingId ? { ...u, ...data.usuario } : u)),
+      );
+      setEditingId(null);
+      setEditData({});
+      showToast("Usuario actualizado exitosamente");
+    } catch (err) {
+      showToast(err.message, "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!deleteConfirm) return;
@@ -86,6 +142,10 @@ export default function Usuarios() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.password !== confirmPassword) {
+      showToast("Las contraseñas no coinciden", "error");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const res = await fetch(
@@ -111,14 +171,15 @@ export default function Usuarios() {
           password: "",
           role: "user",
         });
+        setConfirmPassword("");
         showToast("Usuario invitado exitosamente");
       } else {
         const err = await res.json();
-        showToast(err.error || "Failed to invite user", "error");
+        showToast(err.error || "Error al invitar usuario", "error");
       }
     } catch (err) {
       console.error(err);
-      showToast("Network error inviting user", "error");
+      showToast("Error de red al invitar", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -140,16 +201,16 @@ export default function Usuarios() {
           </span>
         </div>
         <h2 className="text-2xl font-bold text-white tracking-tight">
-          Select a Workspace
+          Selecciona un local
         </h2>
         <p className="text-white/60 font-medium max-w-sm">
-          Please select a local from the overview to manage its users.
+          Selecciona un local desde el overview para gestionar sus usuarios.
         </p>
         <Link
           to="/dashboard"
           className="px-6 py-2.5 rounded-xl glass-button text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all"
         >
-          Go to Overview
+          Ir al Overview
         </Link>
       </div>
     );
@@ -170,19 +231,21 @@ export default function Usuarios() {
               Usuarios
             </h2>
             <p className="text-sm text-white/50 font-medium">
-              Team members for {selectedLocal.name}
+              Equipo de {selectedLocal.name}
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-accent-orange to-primary-light text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all transform hover:-translate-y-0.5"
-        >
-          <span className="material-symbols-outlined text-[18px]">
-            person_add
-          </span>
-          <span className="hidden sm:inline">Invite User</span>
-        </button>
+        {isOwner && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-accent-orange to-primary-light text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all transform hover:-translate-y-0.5 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              person_add
+            </span>
+            <span className="hidden sm:inline">Invitar Usuario</span>
+          </button>
+        )}
       </div>
 
       {/* ── Content / Table Area ── */}
@@ -191,7 +254,7 @@ export default function Usuarios() {
 
         <div className="flex items-center justify-between mb-6 shrink-0">
           <h3 className="text-sm font-bold text-white/80 uppercase tracking-widest">
-            Team Directory
+            Directorio de Equipo
           </h3>
           <div className="relative w-64">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-[18px]">
@@ -199,7 +262,7 @@ export default function Usuarios() {
             </span>
             <input
               type="text"
-              placeholder="Search team..."
+              placeholder="Buscar equipo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent-orange/50 focus:bg-white/10 transition-all font-medium"
@@ -219,10 +282,10 @@ export default function Usuarios() {
               </span>
             </div>
             <p className="text-white/60 text-lg font-bold mb-1">
-              No team members
+              Sin miembros del equipo
             </p>
             <p className="text-white/40 text-sm font-medium">
-              Invite users to help manage this local.
+              Invita usuarios para gestionar este local.
             </p>
           </div>
         ) : (
@@ -231,83 +294,208 @@ export default function Usuarios() {
               <thead>
                 <tr className="border-b border-white/10">
                   <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider">
-                    User
+                    Usuario
                   </th>
                   <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider hidden sm:table-cell">
-                    Contact
+                    Contacto
                   </th>
                   <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider text-center">
-                    Role
+                    Rol
                   </th>
                   <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider text-right">
-                    Actions
+                    Acciones
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredUsuarios.map((u) => (
-                  <tr
-                    key={u.id}
-                    className="border-b border-white/5 hover:bg-white/5 transition-colors group"
-                  >
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                          <span className="material-symbols-outlined text-[20px] text-primary-light">
-                            person
-                          </span>
+                {filteredUsuarios.map((u) => {
+                  const isEditing = editingId === u.id;
+                  return (
+                    <tr
+                      key={u.id}
+                      className={`border-b border-white/5 transition-colors group ${isEditing ? "bg-white/[0.04]" : "hover:bg-white/5"}`}
+                    >
+                      {/* User column */}
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                            <span className="material-symbols-outlined text-[20px] text-primary-light">
+                              person
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            {isEditing ? (
+                              <div className="space-y-1">
+                                <input
+                                  type="text"
+                                  value={editData.name}
+                                  onChange={(e) =>
+                                    setEditData({
+                                      ...editData,
+                                      name: e.target.value,
+                                    })
+                                  }
+                                  className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-all font-bold"
+                                  placeholder="Nombre"
+                                />
+                                <input
+                                  type="email"
+                                  value={editData.email}
+                                  onChange={(e) =>
+                                    setEditData({
+                                      ...editData,
+                                      email: e.target.value,
+                                    })
+                                  }
+                                  className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white/70 focus:outline-none focus:border-primary/50 transition-all"
+                                  placeholder="Email"
+                                />
+                              </div>
+                            ) : (
+                              <>
+                                <div className="font-bold text-white truncate">
+                                  {u.name}
+                                </div>
+                                {u.email && (
+                                  <div className="text-xs text-white/50 truncate">
+                                    {u.email}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-bold text-white">{u.name}</div>
-                          {u.email && (
-                            <div className="text-xs text-white/50">
-                              {u.email}
-                            </div>
+                      </td>
+
+                      {/* Contact column */}
+                      <td className="py-3 px-4 hidden sm:table-cell align-middle">
+                        {isEditing ? (
+                          <input
+                            type="tel"
+                            value={editData.phone}
+                            onChange={(e) =>
+                              setEditData({
+                                ...editData,
+                                phone: e.target.value,
+                              })
+                            }
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white/70 focus:outline-none focus:border-primary/50 transition-all"
+                            placeholder="Teléfono"
+                          />
+                        ) : u.phone ? (
+                          <div className="text-sm text-white/70 flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-[14px]">
+                              phone
+                            </span>{" "}
+                            {u.phone}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-white/30 italic">
+                            Sin teléfono
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Role column */}
+                      <td className="py-3 px-4 text-center align-middle">
+                        {isEditing ? (
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditData({ ...editData, role: "user" })
+                              }
+                              className={`px-2.5 py-1 rounded-md text-xs font-bold tracking-wider uppercase transition-all cursor-pointer ${
+                                editData.role === "user"
+                                  ? "bg-white/10 text-white border border-white/20"
+                                  : "text-white/40 border border-transparent hover:text-white/60"
+                              }`}
+                            >
+                              User
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditData({ ...editData, role: "admin" })
+                              }
+                              className={`px-2.5 py-1 rounded-md text-xs font-bold tracking-wider uppercase transition-all cursor-pointer ${
+                                editData.role === "admin"
+                                  ? "bg-primary/20 text-primary-light border border-primary/30"
+                                  : "text-white/40 border border-transparent hover:text-white/60"
+                              }`}
+                            >
+                              Admin
+                            </button>
+                          </div>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold tracking-widest uppercase ${
+                              u.role === "admin"
+                                ? "bg-primary/20 text-primary-light border border-primary/30"
+                                : "bg-white/5 text-white/60 border border-white/10"
+                            }`}
+                          >
+                            {u.role}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Actions column */}
+                      <td className="py-3 px-4 text-right align-middle">
+                        <div className="flex items-center justify-end gap-2">
+                          {isOwner && (
+                            <>
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    onClick={saveEdit}
+                                    disabled={isSaving}
+                                    className="size-9 rounded-xl flex items-center justify-center text-green-400 hover:bg-green-600 hover:text-white border border-transparent hover:border-green-400 hover:shadow-[0_0_15px_rgba(34,197,94,0.5)] transition-all duration-300 cursor-pointer disabled:opacity-50"
+                                    title="Guardar"
+                                  >
+                                    <span className="material-symbols-outlined text-[20px]">
+                                      {isSaving ? "hourglass_empty" : "check"}
+                                    </span>
+                                  </button>
+                                  <button
+                                    onClick={cancelEdit}
+                                    className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 border border-transparent transition-all duration-300 cursor-pointer"
+                                    title="Cancelar"
+                                  >
+                                    <span className="material-symbols-outlined text-[20px]">
+                                      close
+                                    </span>
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => startEdit(u)}
+                                    className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-primary/30 hover:border-primary/40 border border-transparent hover:shadow-[0_0_15px_rgba(124,58,237,0.4)] transition-all duration-300"
+                                    title="Editar"
+                                  >
+                                    <span className="material-symbols-outlined text-[20px]">
+                                      edit
+                                    </span>
+                                  </button>
+                                  <button
+                                    onClick={() => setDeleteConfirm(u.id)}
+                                    className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-red-600 hover:border-red-400 border border-transparent hover:shadow-[0_0_20px_rgba(239,68,68,0.8),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
+                                    title="Eliminar"
+                                  >
+                                    <span className="material-symbols-outlined text-[20px]">
+                                      delete
+                                    </span>
+                                  </button>
+                                </>
+                              )}
+                            </>
                           )}
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 hidden sm:table-cell align-middle">
-                      {u.phone ? (
-                        <div className="text-sm text-white/70 flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[14px]">
-                            phone
-                          </span>{" "}
-                          {u.phone}
-                        </div>
-                      ) : (
-                        <span className="text-sm text-white/30 italic">
-                          No phone provided
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-center align-middle">
-                      <span
-                        className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold tracking-widest uppercase
-                         ${
-                           u.role === "admin"
-                             ? "bg-primary/20 text-primary-light border border-primary/30"
-                             : "bg-white/5 text-white/60 border border-white/10"
-                         }`}
-                      >
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right align-middle">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setDeleteConfirm(u.id)}
-                          className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-red-600 hover:border-red-400 border border-transparent hover:shadow-[0_0_20px_rgba(239,68,68,0.8),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
-                          title="Eliminar"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">
-                            delete
-                          </span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -317,13 +505,13 @@ export default function Usuarios() {
       <GlassModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Invite Team Member"
+        title="Invitar Miembro"
         icon="person_add"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
-              Full Name *
+              Nombre Completo *
             </label>
             <input
               required
@@ -332,13 +520,13 @@ export default function Usuarios() {
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              placeholder="Alice Admin"
+              placeholder="Juan Pérez"
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
             />
           </div>
           <div>
             <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
-              Email Address *
+              Email *
             </label>
             <input
               required
@@ -347,14 +535,14 @@ export default function Usuarios() {
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
-              placeholder="alice@restaurant.com"
+              placeholder="juan@empresa.com"
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
-                Phone Number
+                Teléfono
               </label>
               <input
                 type="tel"
@@ -368,7 +556,7 @@ export default function Usuarios() {
             </div>
             <div>
               <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
-                Role *
+                Rol *
               </label>
               <div className="relative">
                 <select
@@ -392,36 +580,60 @@ export default function Usuarios() {
               </div>
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
-              Temporary Password *
-            </label>
-            <input
-              required
-              type="password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              placeholder="••••••••"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+                Contraseña *
+              </label>
+              <input
+                required
+                type="password"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                placeholder="••••••••"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+                Confirmar *
+              </label>
+              <input
+                required
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:bg-white/10 transition-all ${
+                  confirmPassword && confirmPassword !== formData.password
+                    ? "border-red-400/50 focus:border-red-400"
+                    : "border-white/10 focus:border-primary/50"
+                }`}
+              />
+              {confirmPassword && confirmPassword !== formData.password && (
+                <p className="text-[10px] text-red-400 mt-1 ml-1 font-semibold">
+                  No coinciden
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="pt-4 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2.5 rounded-xl text-white/60 font-medium hover:bg-white/5 hover:text-white transition-colors"
+              className="px-4 py-2.5 rounded-xl text-white/60 font-medium hover:bg-white/5 hover:text-white transition-colors cursor-pointer"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary-light text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(124,58,237,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary-light text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(124,58,237,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {isSubmitting ? "Inviting..." : "Send Invitation"}
+              {isSubmitting ? "Invitando..." : "Enviar Invitación"}
             </button>
           </div>
         </form>

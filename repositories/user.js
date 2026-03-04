@@ -4,44 +4,56 @@ import bcrypt from "bcrypt";
 const prisma = new PrismaClient();
 
 class userRepository {
+  // Finds a person by email in User table first, then Owner table.
+  // Returns the record + a `_type` field ("user" or "owner").
   static async getUserByEmail(email) {
     const user = await prisma.user.findUnique({ where: { email } });
+    if (user) return { ...user, _type: "user" };
 
-    return user;
+    const owner = await prisma.owner.findUnique({ where: { email } });
+    if (owner) return { ...owner, _type: "owner" };
+
+    return null;
   }
 
   static async verifyUser(email, password) {
-    const user = await this.getUserByEmail(email);
-    if (!user) {
-      return false;
-    }
+    const account = await this.getUserByEmail(email);
+    if (!account) return false;
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    const validPassword = await bcrypt.compare(password, account.password);
     return validPassword ? true : false;
   }
 
   static async afSetCode(email, code) {
-    if (!code || code.length !== 6 || !email) {
-      return;
-    }
-    await prisma.user.update({
+    if (!code || code.length !== 6 || !email) return;
+
+    const account = await this.getUserByEmail(email);
+    if (!account) return;
+
+    const model = account._type === "owner" ? prisma.owner : prisma.user;
+    await model.update({
       where: { email },
       data: {
         twoFactorCode: code,
         twoFactorCodeExpiry: new Date(Date.now() + 10 * 60 * 1000),
       },
     });
-    return;
   }
 
   static async verify2FACode(email, code) {
-    const user = await this.getUserByEmail(email);
-    console.log(user);
-    if (!user || !user.twoFactorCode || user.twoFactorCodeExpiry < new Date()) {
+    const account = await this.getUserByEmail(email);
+    if (
+      !account ||
+      !account.twoFactorCode ||
+      account.twoFactorCodeExpiry < new Date()
+    ) {
       return false;
     }
 
-    return user.twoFactorCode === code ? user.id : false;
+    // Return a composite ID so we know the type when creating the JWT
+    return account.twoFactorCode === code
+      ? { id: account.id, type: account._type }
+      : false;
   }
 
   static async createUser(name, email, password) {
@@ -50,19 +62,21 @@ class userRepository {
     const newUser = await prisma.user.create({
       data: { name, email, password: hashedPassword },
     });
-    const user = this.getUserById(newUser.id);
+    const user = await this.getUserById(newUser.id);
     return user;
   }
 
-  static async getUserById(id) {
-    const user = await prisma.user.findUnique({ where: { id } });
-    const activeUser = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
+  static async getUserById(id, type = "user") {
+    const model = type === "owner" ? prisma.owner : prisma.user;
+    const record = await model.findUnique({ where: { id } });
+    if (!record) return null;
+
+    return {
+      id: record.id,
+      email: record.email,
+      name: record.name,
+      role: record.role,
     };
-    return activeUser;
   }
 }
 export default userRepository;

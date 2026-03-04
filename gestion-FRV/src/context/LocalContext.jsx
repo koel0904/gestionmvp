@@ -38,7 +38,13 @@ export function LocalProvider({ children }) {
 
   return (
     <LocalContext.Provider
-      value={{ selectedLocal, changeLocal, userLocales, loading }}
+      value={{
+        selectedLocal,
+        changeLocal,
+        userLocales,
+        setUserLocales,
+        loading,
+      }}
     >
       {children}
     </LocalContext.Provider>

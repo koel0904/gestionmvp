@@ -11,7 +11,7 @@ const router = express.Router();
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  console.log("Login attempt:", { email, password });
+  console.log("Login attempt:", { email });
 
   try {
     const user = await userRepository.verifyUser(email, password);
@@ -24,7 +24,8 @@ router.post("/login", async (req, res) => {
     await MailRepository.send2FACode(email, code);
     console.log(`2FA code for ${email}: ${code}`);
     res.json({ message: "2FA code sent to email" }).status(200);
-  } catch {
+  } catch (err) {
+    console.error("Login error:", err);
     return res.status(500).json({ error: "Error verifying user" });
   }
 });
@@ -47,7 +48,7 @@ router.post("/login/2fa", async (req, res) => {
     }
 
     console.log("2FA verification successful for:", user);
-    const token = jwt.sign({ userId: user }, SECRET, {
+    const token = jwt.sign({ userId: user.id, userType: user.type }, SECRET, {
       expiresIn: "132h",
     });
 
@@ -55,7 +56,7 @@ router.post("/login/2fa", async (req, res) => {
       httpOnly: true,
       secure: false,
       sameSite: "strict",
-      maxAge: 132000 * 60 * 60, // 132 hours
+      maxAge: 132 * 60 * 60 * 1000, // 132 hours
     });
 
     res.json({ message: "Login successful" });
@@ -81,7 +82,7 @@ router.post("/reset-password", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
     const resetLink = `https://yourapp.com/reset-password?email=${encodeURIComponent(email)}`;
-    await sendPasswordReset(email, resetLink);
+    await MailRepository.sendPasswordReset(email, resetLink);
     res.json({ message: "Password reset instructions sent to email" });
   } catch {
     res
@@ -107,7 +108,8 @@ router.post("/reset-password/confirm", async (req, res) => {
 router.get("/me", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const user = await userRepository.getUserById(userId);
+    const userType = req.user.userType || "user";
+    const user = await userRepository.getUserById(userId, userType);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }

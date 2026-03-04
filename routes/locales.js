@@ -8,11 +8,45 @@ const router = express.Router();
 router.get("/locales", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const locales = await localRepository.getUserLocales(userId);
+    const userType = req.user.userType || "user";
+    const locales = await localRepository.getUserLocales(userId, userType);
     res.json({ locales });
   } catch (err) {
     console.error("Error fetching user locales:", err);
     res.status(500).json({ error: "Error fetching user locales" });
+  }
+});
+
+// POST /api/locales - Create a new local (owner only)
+router.post("/locales", authenticateToken, async (req, res) => {
+  try {
+    const userType = req.user.userType;
+    if (userType !== "owner") {
+      return res
+        .status(403)
+        .json({ error: "Solo los owners pueden crear locales" });
+    }
+
+    const ownerId = req.user.userId;
+    const { name, address, phone, email } = req.body;
+
+    if (!name || name.trim() === "") {
+      return res
+        .status(400)
+        .json({ error: "El nombre del local es obligatorio" });
+    }
+
+    const local = await localRepository.createLocal(ownerId, {
+      name: name.trim(),
+      address: address?.trim() || null,
+      phone: phone?.trim() || null,
+      email: email?.trim() || null,
+    });
+
+    res.json({ message: "Local creado con éxito", local });
+  } catch (err) {
+    console.error("Error creating local:", err);
+    res.status(500).json({ error: "Error creando el local" });
   }
 });
 
@@ -83,11 +117,15 @@ router.get("/locales/:id/usuarios", authenticateToken, async (req, res) => {
 
 router.post("/locales/:id/usuarios", authenticateToken, async (req, res) => {
   try {
-    const usuario = await localRepository.createUsuario(
-      req.params.id,
-      req.body,
-    );
-    // Don't send back password
+    if (req.user.userType !== "owner") {
+      return res
+        .status(403)
+        .json({ error: "Solo owners pueden crear usuarios" });
+    }
+    const usuario = await localRepository.createUsuario(req.params.id, {
+      ...req.body,
+      ownerId: req.user.userId,
+    });
     const safeUser = {
       id: usuario.id,
       name: usuario.name,
@@ -102,6 +140,31 @@ router.post("/locales/:id/usuarios", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Error creating usuario" });
   }
 });
+
+// PUT /api/locales/:localId/usuarios/:id - Update a user (owner only)
+router.put(
+  "/locales/:localId/usuarios/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      if (req.user.userType !== "owner") {
+        return res
+          .status(403)
+          .json({ error: "Solo owners pueden editar usuarios" });
+      }
+      const updated = await localRepository.updateUsuario(
+        req.params.id,
+        req.body,
+      );
+      res.json({ message: "Usuario actualizado", usuario: updated });
+    } catch (err) {
+      if (err.code === "P2002")
+        return res.status(400).json({ error: "Ese email ya está en uso" });
+      console.error("Error updating usuario:", err);
+      res.status(500).json({ error: "Error updating usuario" });
+    }
+  },
+);
 
 router.post("/locales/:id/proveedores", authenticateToken, async (req, res) => {
   try {
