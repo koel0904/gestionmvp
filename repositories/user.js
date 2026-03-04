@@ -20,6 +20,11 @@ class userRepository {
     const account = await this.getUserByEmail(email);
     if (!account) return false;
 
+    // Block inactive users BEFORE password check (security: no 2FA code sent)
+    if (account._type === "user" && account.active === false) {
+      return { inactive: true };
+    }
+
     const validPassword = await bcrypt.compare(password, account.password);
     return validPassword ? true : false;
   }
@@ -48,6 +53,11 @@ class userRepository {
       account.twoFactorCodeExpiry < new Date()
     ) {
       return false;
+    }
+
+    // Defense in depth: re-check active status at 2FA step
+    if (account._type === "user" && account.active === false) {
+      return { inactive: true };
     }
 
     // Return a composite ID so we know the type when creating the JWT

@@ -5,11 +5,13 @@ import { Link } from "react-router-dom";
 import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
+import { smartMatch } from "../../utils/smartSearch";
 
 export default function Usuarios() {
   const { selectedLocal } = useLocal();
   const { user: currentUser } = useAuth();
   const [usuarios, setUsuarios] = useState([]);
+  const [locales, setLocales] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const isOwner = currentUser?.role === "owner";
@@ -28,6 +30,7 @@ export default function Usuarios() {
     phone: "",
     password: "",
     role: "user",
+    position: "",
   });
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -47,6 +50,11 @@ export default function Usuarios() {
       email: u.email,
       phone: u.phone || "",
       role: u.role,
+      position: u.position || "",
+      active: u.active !== undefined ? u.active : true,
+      localId: u.local
+        ? locales.find((l) => l.name === u.local.name)?.id || ""
+        : "",
     });
   };
 
@@ -136,6 +144,25 @@ export default function Usuarios() {
     fetchData();
   }, [selectedLocal]);
 
+  // Fetch owner's locales for the local selector
+  useEffect(() => {
+    if (!isOwner) return;
+    async function fetchLocales() {
+      try {
+        const res = await fetch(`http://localhost:3000/api/locales`, {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setLocales(data.locales || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch locales", err);
+      }
+    }
+    fetchLocales();
+  }, [isOwner]);
+
   const showToast = (message, type = "success") => {
     setToast({ visible: true, message, type });
   };
@@ -170,6 +197,7 @@ export default function Usuarios() {
           phone: "",
           password: "",
           role: "user",
+          position: "",
         });
         setConfirmPassword("");
         showToast("Usuario invitado exitosamente");
@@ -185,11 +213,16 @@ export default function Usuarios() {
     }
   };
 
-  const filteredUsuarios = usuarios.filter(
-    (u) =>
-      u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.role?.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredUsuarios = usuarios.filter((u) =>
+    smartMatch(searchTerm, [
+      u.name,
+      u.email,
+      u.phone,
+      u.role,
+      u.position,
+      u.local?.name,
+      u.active ? "activo" : "inactivo",
+    ]),
   );
 
   if (!selectedLocal) {
@@ -238,7 +271,7 @@ export default function Usuarios() {
         {isOwner && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-accent-orange to-primary-light text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all transform hover:-translate-y-0.5 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-light text-white font-bold tracking-wide shadow-[0_2px_8px_rgba(167,139,250,0.4)] hover:shadow-[0_0_24px_rgba(167,139,250,0.55)] transition-all transform hover:-translate-y-0.5 cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">
               person_add
@@ -299,8 +332,17 @@ export default function Usuarios() {
                   <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider hidden sm:table-cell">
                     Contacto
                   </th>
+                  <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider hidden lg:table-cell">
+                    Local
+                  </th>
+                  <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider hidden md:table-cell">
+                    Posición
+                  </th>
                   <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider text-center">
                     Rol
+                  </th>
+                  <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider text-center">
+                    Estado
                   </th>
                   <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider text-right">
                     Acciones
@@ -318,7 +360,7 @@ export default function Usuarios() {
                       {/* User column */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="size-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                          <div className="size-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                             <span className="material-symbols-outlined text-[20px] text-primary-light">
                               person
                             </span>
@@ -396,6 +438,67 @@ export default function Usuarios() {
                         )}
                       </td>
 
+                      {/* Local column */}
+                      <td className="py-3 px-4 hidden lg:table-cell align-middle">
+                        {isEditing ? (
+                          <div className="relative">
+                            <select
+                              value={editData.localId || ""}
+                              onChange={(e) =>
+                                setEditData({
+                                  ...editData,
+                                  localId: e.target.value,
+                                })
+                              }
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer"
+                            >
+                              <option value="" className="bg-slate-900">
+                                Sin local
+                              </option>
+                              {locales.map((l) => (
+                                <option
+                                  key={l.id}
+                                  value={l.id}
+                                  className="bg-slate-900"
+                                >
+                                  {l.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-md bg-white/5 text-white/70 text-xs border border-white/10 block w-fit truncate max-w-[150px]">
+                            {u.local?.name || "Sin local"}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Position column */}
+                      <td className="py-3 px-4 hidden md:table-cell align-middle">
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editData.position}
+                            onChange={(e) =>
+                              setEditData({
+                                ...editData,
+                                position: e.target.value,
+                              })
+                            }
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white/70 focus:outline-none focus:border-primary/50 transition-all"
+                            placeholder="ej: Chef, Cajero..."
+                          />
+                        ) : u.position ? (
+                          <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-widest bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 truncate max-w-[120px]">
+                            {u.position}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-white/30 italic">
+                            Sin posición
+                          </span>
+                        )}
+                      </td>
+
                       {/* Role column */}
                       <td className="py-3 px-4 text-center align-middle">
                         {isEditing ? (
@@ -435,7 +538,43 @@ export default function Usuarios() {
                                 : "bg-white/5 text-white/60 border border-white/10"
                             }`}
                           >
-                            {u.role}
+                            {u.role === "admin" ? "Admin" : "User"}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Status column */}
+                      <td className="py-3 px-4 text-center align-middle">
+                        {isEditing ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditData({
+                                ...editData,
+                                active: !editData.active,
+                              })
+                            }
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                              editData.active ? "bg-emerald-500" : "bg-white/20"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block size-4 transform rounded-full bg-white transition-transform shadow-sm ${
+                                editData.active
+                                  ? "translate-x-6"
+                                  : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-widest ${
+                              u.active !== false
+                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                : "bg-red-500/20 text-red-400 border border-red-500/30"
+                            }`}
+                          >
+                            {u.active !== false ? "Activo" : "Inactivo"}
                           </span>
                         )}
                       </td>
@@ -536,6 +675,21 @@ export default function Usuarios() {
                 setFormData({ ...formData, email: e.target.value })
               }
               placeholder="juan@empresa.com"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
+            />
+          </div>
+          {/* Position */}
+          <div>
+            <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+              Posición en el negocio
+            </label>
+            <input
+              type="text"
+              value={formData.position || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, position: e.target.value })
+              }
+              placeholder="ej: Chef, Cajero, Mesero..."
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
             />
           </div>

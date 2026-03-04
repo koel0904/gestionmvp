@@ -5,6 +5,7 @@ import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
 import EditForm from "../../components/EditForm";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
+import { smartMatch } from "../../utils/smartSearch";
 
 export default function Proveedores() {
   const { selectedLocal } = useLocal();
@@ -133,11 +134,8 @@ export default function Proveedores() {
     }
   };
 
-  const filteredProveedores = proveedores.filter(
-    (p) =>
-      p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.phone?.includes(searchTerm),
+  const filteredProveedores = proveedores.filter((p) =>
+    smartMatch(searchTerm, [p.name, p.email, p.phone]),
   );
 
   if (!selectedLocal) {
@@ -185,10 +183,10 @@ export default function Proveedores() {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-accent-orange to-primary-light text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all transform hover:-translate-y-0.5"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-light text-white font-bold tracking-wide shadow-[0_2px_8px_rgba(167,139,250,0.4)] hover:shadow-[0_0_24px_rgba(167,139,250,0.55)] transition-all transform hover:-translate-y-0.5"
         >
           <span className="material-symbols-outlined text-[18px]">add</span>
-          <span className="hidden sm:inline">New Supplier</span>
+          <span className="hidden sm:inline">Add Supplier</span>
         </button>
       </div>
 
@@ -299,7 +297,7 @@ export default function Proveedores() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setEditingProveedor(p)}
-                          className="size-9 rounded-xl flex items-center justify-center hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                          className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-sky-500/20 hover:border-sky-400 border border-transparent hover:shadow-[0_0_20px_rgba(56,189,248,0.5),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
                           title="Edit Supplier"
                         >
                           <span className="material-symbols-outlined text-[20px]">

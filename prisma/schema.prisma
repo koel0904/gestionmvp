@@ -39,6 +39,8 @@ model User {
   phone       String?
   password    String   @db.VarChar(255)
   role        String   @default("user")
+  position    String?
+  active      Boolean  @default(true)
   permissions Json     @default("[]")
   twoFactorCode  String? @db.VarChar(255)
   twoFactorCodeExpiry DateTime?
@@ -83,14 +85,14 @@ model Inventario {
   precio_compra Float
   precio_venta  Float
   stock         Int
+  maxStock      Int     @default(100)
+  estado        Boolean @default(true)
   
   proveedor   Proveedores @relation(fields: [proveedorId], references: [id])
   proveedorId String
   
   local   Local   @relation(fields: [localId], references: [id])
   localId String
-
-  ventas Ventas[]
 }
 
 model Clientes {
@@ -107,18 +109,13 @@ model Clientes {
 
 model Ventas {
   id           String   @id @default(uuid())
-  cantidad     Int
-  precio_venta Float
   total        Float
+  items        Json     @default("[]")
   fecha        DateTime @default(now())
   
-  cliente   Clientes @relation(fields: [clienteId], references: [id])
-  clienteId String
-  
-  inventario   Inventario @relation(fields: [inventarioId], references: [id])
-  inventarioId String
+  cliente   Clientes? @relation(fields: [clienteId], references: [id])
+  clienteId String?
 
   local   Local   @relation(fields: [localId], references: [id])
   localId String
 }
-

@@ -78,13 +78,12 @@ class localRepository {
     });
   }
 
-  // Method to get Ventas for a local (includes Cliente and items)
+  // Method to get Ventas for a local (items is a JSON column, auto-returned)
   static async getVentas(localId) {
     return prisma.ventas.findMany({
       where: { localId },
       include: {
         cliente: { select: { name: true, email: true } },
-        inventario: { select: { name: true, precio_venta: true } },
       },
       orderBy: { fecha: "desc" },
     });
@@ -100,6 +99,9 @@ class localRepository {
         email: true,
         role: true,
         phone: true,
+        position: true,
+        active: true,
+        local: { select: { name: true } },
       },
       orderBy: { name: "asc" },
     });
@@ -149,6 +151,7 @@ class localRepository {
         email: data.email,
         phone: data.phone,
         role: data.role || "user",
+        position: data.position || null,
         password: hashedPassword,
         localId,
         ownerId: data.ownerId,
@@ -157,20 +160,29 @@ class localRepository {
   }
 
   static async updateUsuario(id, data) {
+    const updateData = {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      role: data.role,
+    };
+    if (data.position !== undefined)
+      updateData.position = data.position || null;
+    if (data.active !== undefined) updateData.active = data.active;
+    if (data.localId !== undefined) updateData.localId = data.localId || null;
+
     return prisma.user.update({
       where: { id },
-      data: {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        role: data.role,
-      },
+      data: updateData,
       select: {
         id: true,
         name: true,
         email: true,
         phone: true,
         role: true,
+        position: true,
+        active: true,
+        local: { select: { name: true } },
       },
     });
   }
@@ -189,14 +201,20 @@ class localRepository {
   }
 
   static async updateInventario(id, data) {
+    const updateData = {
+      name: data.name,
+      precio_compra: parseFloat(data.precio_compra),
+      precio_venta: parseFloat(data.precio_venta),
+      stock: parseInt(data.stock, 10),
+    };
+    if (data.maxStock !== undefined)
+      updateData.maxStock = parseInt(data.maxStock, 10);
+    if (data.proveedorId) updateData.proveedorId = data.proveedorId;
+    if (data.estado !== undefined) updateData.estado = data.estado;
+
     return prisma.inventario.update({
       where: { id },
-      data: {
-        name: data.name,
-        precio_compra: parseFloat(data.precio_compra),
-        precio_venta: parseFloat(data.precio_venta),
-        stock: parseInt(data.stock, 10),
-      },
+      data: updateData,
       include: {
         proveedor: { select: { name: true } },
       },
@@ -226,33 +244,22 @@ class localRepository {
   static async createVenta(localId, data) {
     return prisma.ventas.create({
       data: {
-        cantidad: parseInt(data.cantidad, 10),
-        precio_venta: parseFloat(data.precio_venta),
         total: parseFloat(data.total),
+        items: data.items,
         fecha: new Date(),
         clienteId: data.clienteId,
-        inventarioId: data.inventarioId,
         localId,
       },
     });
   }
 
   static async updateVenta(id, data) {
-    const invId = data.inventarioId;
-    const item = await prisma.inventario.findUnique({ where: { id: invId } });
-
-    if (!item) throw new Error("Inventario item not found");
-
-    const qty = parseInt(data.cantidad, 10);
-
     return prisma.ventas.update({
       where: { id },
       data: {
-        cantidad: qty,
-        precio_venta: item.precio_venta,
-        total: qty * item.precio_venta,
+        total: parseFloat(data.total),
+        items: data.items,
         clienteId: data.clienteId,
-        inventarioId: invId,
       },
       include: {
         cliente: { select: { name: true, email: true } },
@@ -266,13 +273,7 @@ class localRepository {
       select: { id: true },
     });
 
-    const invIds = inventarioItems.map((item) => item.id);
-
-    if (invIds.length > 0) {
-      await prisma.ventas.deleteMany({
-        where: { inventarioId: { in: invIds } },
-      });
-
+    if (inventarioItems.length > 0) {
       await prisma.inventario.deleteMany({
         where: { proveedorId: id },
       });
@@ -290,9 +291,6 @@ class localRepository {
   }
 
   static async deleteInventario(id) {
-    await prisma.ventas.deleteMany({
-      where: { inventarioId: id },
-    });
     return prisma.inventario.delete({
       where: { id },
     });

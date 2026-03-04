@@ -15,6 +15,16 @@ router.post("/login", async (req, res) => {
 
   try {
     const user = await userRepository.verifyUser(email, password);
+
+    // Account deactivated — block before 2FA
+    if (user && user.inactive) {
+      return res.status(403).json({
+        error:
+          "Cuenta desactivada. Contacte a soporte o al/la dueñ@ del negocio.",
+        inactive: true,
+      });
+    }
+
     if (!user || user === false) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
@@ -43,6 +53,16 @@ router.post("/login/2fa", async (req, res) => {
     } */
 
     const user = await userRepository.verify2FACode(email, code);
+
+    // Defense in depth: re-check active status at 2FA step
+    if (user && user.inactive) {
+      return res.status(403).json({
+        error:
+          "Cuenta desactivada. Contacte a soporte o al/la dueñ@ del negocio.",
+        inactive: true,
+      });
+    }
+
     if (!user) {
       return res.status(401).json({ error: "Invalid credentials" });
     }

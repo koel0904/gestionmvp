@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
-import EditForm from "../../components/EditForm";
+import { smartMatch } from "../../utils/smartSearch";
 
 export default function Inventario() {
   const { selectedLocal } = useLocal();
@@ -32,6 +32,57 @@ export default function Inventario() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [editingItem, setEditingItem] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    precio_compra: "",
+    precio_venta: "",
+    stock: "",
+    maxStock: "",
+    proveedorId: "",
+    estado: true,
+  });
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const startEdit = (item) => {
+    setEditingItem(item);
+    setEditForm({
+      name: item.name || "",
+      precio_compra: item.precio_compra || "",
+      precio_venta: item.precio_venta || "",
+      stock: item.stock ?? "",
+      maxStock: item.maxStock ?? 100,
+      proveedorId: item.proveedorId || "",
+      estado: item.estado !== undefined ? item.estado : true,
+    });
+  };
+
+  // ── Stock color helper ──
+  const getStockColor = (stock, maxStock = 100) => {
+    if (stock === 0)
+      return {
+        text: "text-red-500",
+        bg: "bg-red-500/15",
+        border: "border-red-500/30",
+      };
+    const pct = (stock / maxStock) * 100;
+    if (pct <= 30)
+      return {
+        text: "text-orange-400",
+        bg: "bg-orange-400/15",
+        border: "border-orange-400/30",
+      };
+    if (pct <= 70)
+      return {
+        text: "text-yellow-400",
+        bg: "bg-yellow-400/15",
+        border: "border-yellow-400/30",
+      };
+    return {
+      text: "text-emerald-400",
+      bg: "bg-emerald-400/15",
+      border: "border-emerald-400/30",
+    };
+  };
 
   const handleDelete = async () => {
     if (!deleteConfirm) return;
@@ -60,22 +111,35 @@ export default function Inventario() {
     }
   };
 
-  const handleEditSuccess = async () => {
-    // Re-fetch to get correct relation names
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setIsSavingEdit(true);
     try {
       const res = await fetch(
+        `http://localhost:3000/api/locales/${selectedLocal.id}/inventario/${editingItem.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(editForm),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error al actualizar");
+      }
+      const refresh = await fetch(
         `http://localhost:3000/api/locales/${selectedLocal.id}/inventario`,
         { credentials: "include" },
       );
-      if (res.ok) {
-        const data = await res.json();
-        setInventario(data);
-      }
+      if (refresh.ok) setInventario(await refresh.json());
+      setEditingItem(null);
+      showToast("Producto actualizado exitosamente");
     } catch (err) {
-      console.error(err);
+      showToast(err.message, "error");
+    } finally {
+      setIsSavingEdit(false);
     }
-    setEditingItem(null);
-    showToast("Producto actualizado exitosamente");
   };
 
   useEffect(() => {
@@ -157,10 +221,15 @@ export default function Inventario() {
     }
   };
 
-  const filteredInventario = inventario.filter(
-    (i) =>
-      i.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      i.proveedor?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredInventario = inventario.filter((i) =>
+    smartMatch(searchTerm, [
+      i.name,
+      i.proveedor?.name,
+      `$${i.precio_venta}`,
+      `$${i.precio_compra}`,
+      String(i.stock),
+      i.estado ? "activo" : "inactivo",
+    ]),
   );
 
   if (!selectedLocal) {
@@ -208,7 +277,7 @@ export default function Inventario() {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-accent-orange to-primary-light text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all transform hover:-translate-y-0.5"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-light text-white font-bold tracking-wide shadow-[0_2px_8px_rgba(167,139,250,0.4)] hover:shadow-[0_0_24px_rgba(167,139,250,0.55)] transition-all transform hover:-translate-y-0.5"
         >
           <span className="material-symbols-outlined text-[18px]">add_box</span>
           <span className="hidden sm:inline">Add Product</span>
@@ -315,11 +384,21 @@ export default function Inventario() {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <span
-                        className={`font-bold text-sm ${item.stock < 10 ? "text-accent-orange" : "text-white"}`}
-                      >
-                        {item.stock}
-                      </span>
+                      {(() => {
+                        const colors = getStockColor(item.stock, item.maxStock);
+                        return (
+                          <div className="inline-flex flex-col items-end">
+                            <span
+                              className={`font-bold text-sm ${colors.text} px-2.5 py-0.5 rounded-md ${colors.bg} border ${colors.border}`}
+                            >
+                              {item.stock}
+                            </span>
+                            <span className="text-[10px] text-white/30 mt-0.5">
+                              / {item.maxStock || 100}
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="py-3 px-4 hidden md:table-cell">
                       <span className="px-2.5 py-1 rounded-md bg-white/5 text-white/70 text-xs border border-white/10 block w-fit truncate max-w-[150px]">
@@ -336,7 +415,7 @@ export default function Inventario() {
                     <td className="py-3 px-4 text-right align-middle">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => setEditingItem(item)}
+                          onClick={() => startEdit(item)}
                           className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-sky-500/20 hover:border-sky-400 border border-transparent hover:shadow-[0_0_20px_rgba(56,189,248,0.5),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
                           title="Editar"
                         >
@@ -487,23 +566,227 @@ export default function Inventario() {
         </form>
       </GlassModal>
 
-      <GlassModal isOpen={!!editingItem} onClose={() => setEditingItem(null)}>
+      {/* ── Edit Product Modal ── */}
+      <GlassModal
+        isOpen={!!editingItem}
+        onClose={() => setEditingItem(null)}
+        title={`Editar: ${editingItem?.name || ""}`}
+        icon="edit"
+        iconColor="text-sky-400"
+        gradient="from-sky-400/30 to-blue-500/20"
+      >
         {editingItem && (
-          <div className="-mx-6 -my-6">
-            <EditForm
-              title={`Edit ${editingItem.name}`}
-              data={{
-                name: editingItem.name,
-                precio_compra: editingItem.precio_compra,
-                precio_venta: editingItem.precio_venta,
-                stock: editingItem.stock,
-              }}
-              apiUrl={`/locales/${selectedLocal.id}/inventario/${editingItem.id}`}
-              method="PUT"
-              onSuccess={handleEditSuccess}
-              onCancel={() => setEditingItem(null)}
-            />
-          </div>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            {/* Product Name */}
+            <div>
+              <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+                Nombre del Producto *
+              </label>
+              <input
+                required
+                type="text"
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, name: e.target.value })
+                }
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-sky-400/50 focus:bg-white/10 transition-all"
+              />
+            </div>
+
+            {/* Prices */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+                  Precio Compra *
+                </label>
+                <input
+                  required
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editForm.precio_compra}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, precio_compra: e.target.value })
+                  }
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-sky-400/50 focus:bg-white/10 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+                  Precio Venta *
+                </label>
+                <input
+                  required
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editForm.precio_venta}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, precio_venta: e.target.value })
+                  }
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-sky-400/50 focus:bg-white/10 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Margin preview */}
+            {editForm.precio_compra && editForm.precio_venta && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <span className="material-symbols-outlined text-[16px] text-emerald-400">
+                  trending_up
+                </span>
+                <span className="text-xs text-emerald-400 font-bold">
+                  Margen: $
+                  {(
+                    parseFloat(editForm.precio_venta) -
+                    parseFloat(editForm.precio_compra)
+                  ).toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            {/* Stock + MaxStock */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+                  Stock Actual *
+                </label>
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  value={editForm.stock}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, stock: e.target.value })
+                  }
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-sky-400/50 focus:bg-white/10 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+                  Stock Máximo
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={editForm.maxStock}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, maxStock: e.target.value })
+                  }
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-sky-400/50 focus:bg-white/10 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Stock bar preview */}
+            {editForm.stock !== "" &&
+              editForm.maxStock &&
+              (() => {
+                const pct = Math.min(
+                  100,
+                  (parseInt(editForm.stock) / parseInt(editForm.maxStock)) *
+                    100,
+                );
+                const colors = getStockColor(
+                  parseInt(editForm.stock),
+                  parseInt(editForm.maxStock),
+                );
+                return (
+                  <div className="px-1">
+                    <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${colors.bg.replace("/15", "")}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className={`text-[10px] font-bold ${colors.text}`}>
+                        {Math.round(pct)}%
+                      </span>
+                      <span className="text-[10px] text-white/30">
+                        {editForm.stock} / {editForm.maxStock}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+            {/* Proveedor */}
+            <div>
+              <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+                Proveedor *
+              </label>
+              <div className="relative">
+                <select
+                  required
+                  value={editForm.proveedorId}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, proveedorId: e.target.value })
+                  }
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-400/50 focus:bg-white/10 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="" disabled className="bg-slate-900">
+                    Seleccionar proveedor
+                  </option>
+                  {proveedores.map((p) => (
+                    <option key={p.id} value={p.id} className="bg-slate-900">
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none">
+                  expand_more
+                </span>
+              </div>
+            </div>
+
+            {/* Estado toggle */}
+            <div className="flex items-center justify-between px-3 py-3 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`material-symbols-outlined text-[20px] ${editForm.estado ? "text-emerald-400" : "text-red-400"}`}
+                >
+                  {editForm.estado ? "check_circle" : "cancel"}
+                </span>
+                <span className="text-sm font-medium text-white/80">
+                  {editForm.estado ? "Producto Activo" : "Producto Inactivo"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setEditForm({ ...editForm, estado: !editForm.estado })
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                  editForm.estado ? "bg-emerald-500" : "bg-white/20"
+                }`}
+              >
+                <span
+                  className={`inline-block size-4 transform rounded-full bg-white transition-transform shadow-sm ${
+                    editForm.estado ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Actions */}
+            <div className="pt-4 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setEditingItem(null)}
+                className="px-4 py-2.5 rounded-xl text-white/60 font-medium hover:bg-white/5 hover:text-white transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isSavingEdit}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(56,189,248,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isSavingEdit ? "Guardando..." : "Guardar Cambios"}
+              </button>
+            </div>
+          </form>
         )}
       </GlassModal>
 

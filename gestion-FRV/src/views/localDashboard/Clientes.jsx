@@ -5,6 +5,7 @@ import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
 import EditForm from "../../components/EditForm";
+import { smartMatch } from "../../utils/smartSearch";
 
 export default function Clientes() {
   const { selectedLocal } = useLocal();
@@ -125,11 +126,8 @@ export default function Clientes() {
     }
   };
 
-  const filteredClientes = clientes.filter(
-    (c) =>
-      c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.phone?.includes(searchTerm),
+  const filteredClientes = clientes.filter((c) =>
+    smartMatch(searchTerm, [c.name, c.email, c.phone, c.direccion]),
   );
 
   if (!selectedLocal) {
@@ -177,7 +175,7 @@ export default function Clientes() {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-accent-orange to-primary-light text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all transform hover:-translate-y-0.5"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-light text-white font-bold tracking-wide shadow-[0_2px_8px_rgba(167,139,250,0.4)] hover:shadow-[0_0_24px_rgba(167,139,250,0.55)] transition-all transform hover:-translate-y-0.5"
         >
           <span className="material-symbols-outlined text-[18px]">
             person_add
@@ -253,7 +251,7 @@ export default function Clientes() {
                   >
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        <div className="size-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                           <span className="material-symbols-outlined text-[20px] text-primary-light">
                             person
                           </span>
