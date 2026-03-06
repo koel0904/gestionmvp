@@ -101,6 +101,7 @@ class localRepository {
         phone: true,
         position: true,
         active: true,
+        permissions: true,
         local: { select: { name: true } },
       },
       orderBy: { name: "asc" },
@@ -118,6 +119,21 @@ class localRepository {
         email: data.email,
         ownerId,
       },
+    });
+  }
+
+  static async updateLocal(id, data) {
+    const updateData = {
+      name: data.name,
+      address: data.address,
+      phone: data.phone,
+      email: data.email,
+    };
+    if (data.active !== undefined) updateData.active = data.active;
+
+    return prisma.local.update({
+      where: { id },
+      data: updateData,
     });
   }
 
@@ -182,6 +198,7 @@ class localRepository {
         role: true,
         position: true,
         active: true,
+        permissions: true,
         local: { select: { name: true } },
       },
     });
@@ -307,6 +324,89 @@ class localRepository {
 
   static async deleteVenta(id) {
     return prisma.ventas.delete({
+      where: { id },
+    });
+  }
+
+  // == VEHICULOS ==
+
+  static async getVehiculos(localId) {
+    return prisma.vehiculos.findMany({
+      where: { localId },
+      include: {
+        encargados: {
+          select: { id: true, name: true },
+        },
+      },
+      orderBy: { marca: "asc" },
+    });
+  }
+
+  static async createVehiculo(localId, data) {
+    return prisma.vehiculos.create({
+      data: {
+        carName: data.carName || null,
+        marca: data.marca,
+        modelo: data.modelo,
+        year: data.year,
+        tipo: data.tipo,
+        ultimoMantenimientoFecha: data.ultimoMantenimientoFecha || null,
+        ultimoMantenimientoKm: data.ultimoMantenimientoKm || null,
+        proximoMantenimientoFecha: data.proximoMantenimientoFecha || null,
+        proximoMantenimientoKm: data.proximoMantenimientoKm || null,
+        frecuenciaKm: data.frecuenciaKm || null,
+        frecuenciaTiempo: data.frecuenciaTiempo || null,
+        estado: data.estado !== undefined ? data.estado : true,
+        imagen: data.imagen || null,
+        localId,
+        encargados: data.encargadoIds
+          ? { connect: data.encargadoIds.map((id) => ({ id })) }
+          : undefined,
+      },
+      include: {
+        encargados: { select: { id: true, name: true } },
+      },
+    });
+  }
+
+  static async updateVehiculo(id, data) {
+    const updateData = {};
+    if (data.carName !== undefined) updateData.carName = data.carName;
+    if (data.marca !== undefined) updateData.marca = data.marca;
+    if (data.modelo !== undefined) updateData.modelo = data.modelo;
+    if (data.year !== undefined) updateData.year = data.year;
+    if (data.tipo !== undefined) updateData.tipo = data.tipo;
+    if (data.ultimoMantenimientoFecha !== undefined)
+      updateData.ultimoMantenimientoFecha = data.ultimoMantenimientoFecha;
+    if (data.ultimoMantenimientoKm !== undefined)
+      updateData.ultimoMantenimientoKm = data.ultimoMantenimientoKm;
+    if (data.proximoMantenimientoFecha !== undefined)
+      updateData.proximoMantenimientoFecha = data.proximoMantenimientoFecha;
+    if (data.proximoMantenimientoKm !== undefined)
+      updateData.proximoMantenimientoKm = data.proximoMantenimientoKm;
+    if (data.frecuenciaKm !== undefined)
+      updateData.frecuenciaKm = data.frecuenciaKm;
+    if (data.frecuenciaTiempo !== undefined)
+      updateData.frecuenciaTiempo = data.frecuenciaTiempo;
+    if (data.estado !== undefined) updateData.estado = data.estado;
+    if (data.imagen !== undefined) updateData.imagen = data.imagen;
+    if (data.encargadoIds !== undefined) {
+      updateData.encargados = {
+        set: data.encargadoIds.map((uid) => ({ id: uid })),
+      };
+    }
+
+    return prisma.vehiculos.update({
+      where: { id },
+      data: updateData,
+      include: {
+        encargados: { select: { id: true, name: true } },
+      },
+    });
+  }
+
+  static async deleteVehiculo(id) {
+    return prisma.vehiculos.delete({
       where: { id },
     });
   }
