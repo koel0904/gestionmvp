@@ -6,6 +6,7 @@ import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
 import { smartMatch } from "../../utils/smartSearch";
+import usePermissions from "../../hooks/usePermissions";
 
 export default function Usuarios() {
   const { selectedLocal } = useLocal();
@@ -14,7 +15,8 @@ export default function Usuarios() {
   const [locales, setLocales] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const isOwner = currentUser?.role === "owner";
+  const { canView, canAdd, canEdit, canDelete, checkAccess, isOwner } =
+    usePermissions("usuarios");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -249,6 +251,24 @@ export default function Usuarios() {
     );
   }
 
+  if (!canView) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-140px)] text-center space-y-4 animate-in fade-in zoom-in-95 duration-300">
+        <div className="size-16 rounded-2xl glass-panel border-white/20 flex items-center justify-center shadow-lg">
+          <span className="material-symbols-outlined text-4xl text-white/50">
+            lock
+          </span>
+        </div>
+        <h2 className="text-2xl font-bold text-white tracking-tight">
+          Acceso Denegado
+        </h2>
+        <p className="text-white/60 font-medium max-w-sm">
+          No tienes permisos para acceder a esta vista.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5 animate-in fade-in zoom-in-95 duration-300 h-full flex flex-col">
       {/* ── Header ── */}
@@ -268,17 +288,17 @@ export default function Usuarios() {
             </p>
           </div>
         </div>
-        {isOwner && (
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-light text-white font-bold tracking-wide shadow-[0_2px_8px_rgba(167,139,250,0.4)] hover:shadow-[0_0_24px_rgba(167,139,250,0.55)] transition-all transform hover:-translate-y-0.5 cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              person_add
-            </span>
-            <span className="hidden sm:inline">Invitar Usuario</span>
-          </button>
-        )}
+        <button
+          onClick={() =>
+            checkAccess("add", () => setIsModalOpen(true), showToast)
+          }
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-light text-white font-bold tracking-wide shadow-[0_2px_8px_rgba(167,139,250,0.4)] hover:shadow-[0_0_24px_rgba(167,139,250,0.55)] transition-all transform hover:-translate-y-0.5 cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            person_add
+          </span>
+          <span className="hidden sm:inline">Invitar Usuario</span>
+        </button>
       </div>
 
       {/* ── Content / Table Area ── */}
@@ -582,52 +602,62 @@ export default function Usuarios() {
                       {/* Actions column */}
                       <td className="py-3 px-4 text-right align-middle">
                         <div className="flex items-center justify-end gap-2">
-                          {isOwner && (
+                          {isEditing ? (
                             <>
-                              {isEditing ? (
-                                <>
-                                  <button
-                                    onClick={saveEdit}
-                                    disabled={isSaving}
-                                    className="size-9 rounded-xl flex items-center justify-center text-green-400 hover:bg-green-600 hover:text-white border border-transparent hover:border-green-400 hover:shadow-[0_0_15px_rgba(34,197,94,0.5)] transition-all duration-300 cursor-pointer disabled:opacity-50"
-                                    title="Guardar"
-                                  >
-                                    <span className="material-symbols-outlined text-[20px]">
-                                      {isSaving ? "hourglass_empty" : "check"}
-                                    </span>
-                                  </button>
-                                  <button
-                                    onClick={cancelEdit}
-                                    className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 border border-transparent transition-all duration-300 cursor-pointer"
-                                    title="Cancelar"
-                                  >
-                                    <span className="material-symbols-outlined text-[20px]">
-                                      close
-                                    </span>
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <button
-                                    onClick={() => startEdit(u)}
-                                    className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-primary/30 hover:border-primary/40 border border-transparent hover:shadow-[0_0_15px_rgba(124,58,237,0.4)] transition-all duration-300"
-                                    title="Editar"
-                                  >
-                                    <span className="material-symbols-outlined text-[20px]">
-                                      edit
-                                    </span>
-                                  </button>
-                                  <button
-                                    onClick={() => setDeleteConfirm(u.id)}
-                                    className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-red-600 hover:border-red-400 border border-transparent hover:shadow-[0_0_20px_rgba(239,68,68,0.8),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
-                                    title="Eliminar"
-                                  >
-                                    <span className="material-symbols-outlined text-[20px]">
-                                      delete
-                                    </span>
-                                  </button>
-                                </>
-                              )}
+                              <button
+                                onClick={() =>
+                                  checkAccess("edit", saveEdit, showToast)
+                                }
+                                disabled={isSaving}
+                                className="size-9 rounded-xl flex items-center justify-center text-green-400 hover:bg-green-600 hover:text-white border border-transparent hover:border-green-400 hover:shadow-[0_0_15px_rgba(34,197,94,0.5)] transition-all duration-300 cursor-pointer disabled:opacity-50"
+                                title="Guardar"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">
+                                  {isSaving ? "hourglass_empty" : "check"}
+                                </span>
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 border border-transparent transition-all duration-300 cursor-pointer"
+                                title="Cancelar"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">
+                                  close
+                                </span>
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() =>
+                                  checkAccess(
+                                    "edit",
+                                    () => startEdit(u),
+                                    showToast,
+                                  )
+                                }
+                                className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-primary/30 hover:border-primary/40 border border-transparent hover:shadow-[0_0_15px_rgba(124,58,237,0.4)] transition-all duration-300"
+                                title="Editar"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">
+                                  edit
+                                </span>
+                              </button>
+                              <button
+                                onClick={() =>
+                                  checkAccess(
+                                    "delete",
+                                    () => setDeleteConfirm(u.id),
+                                    showToast,
+                                  )
+                                }
+                                className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-red-600 hover:border-red-400 border border-transparent hover:shadow-[0_0_20px_rgba(239,68,68,0.8),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
+                                title="Eliminar"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">
+                                  delete
+                                </span>
+                              </button>
                             </>
                           )}
                         </div>

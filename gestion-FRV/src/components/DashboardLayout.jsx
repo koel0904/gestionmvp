@@ -14,6 +14,7 @@ const sidebarLinks = [
   { name: "Clientes", icon: "groups", path: "/dashboard/clientes" },
   { name: "Inventario", icon: "inventory_2", path: "/dashboard/inventario" },
   { name: "Usuarios", icon: "manage_accounts", path: "/dashboard/usuarios" },
+  { name: "Vehículos", icon: "directions_car", path: "/dashboard/vehiculos" },
   { name: "Analitics", icon: "analytics", path: "/dashboard/analitics" },
   { name: "Settings", icon: "settings", path: "/dashboard/settings" },
 ];
@@ -43,9 +44,45 @@ export default function DashboardLayout() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Get current view name for breadcrumb
-  const currentView =
-    sidebarLinks.find((l) => l.path === location.pathname)?.name || "Dashboard";
+  // Dynamic sidebar links based on role
+  const getSidebarLinks = () => {
+    let links = [...sidebarLinks];
+
+    // Filter links based on permissions if not owner
+    if (user?.role !== "owner" && user?.type !== "owner") {
+      links = links.filter((link) => {
+        const viewName = link.name.toLowerCase();
+        // Always show Overview, Settings, Analitics (unless we want to block them too)
+        if (["overview", "settings", "analitics"].includes(viewName))
+          return true;
+
+        // Block Vehículos -> vehiculos translation
+        const permKey = viewName === "vehículos" ? "vehiculos" : viewName;
+
+        // Check if the user has view permission for this view
+        const hasViewPerm = user?.permissions?.[permKey]?.view;
+        // If undefined/null/false, block it. Defaults to true for backwards compatibility if no perms system? No, instructions say block.
+        // But if perms aren't fully migrated, wait. Let's strictly enforce if perms exist.
+        return hasViewPerm === true;
+      });
+    }
+
+    if (user?.role === "owner" || user?.type === "owner") {
+      // Insert Permisos right before Settings
+      const settingsIndex = links.findIndex((l) => l.name === "Settings");
+      links.splice(settingsIndex !== -1 ? settingsIndex : links.length, 0, {
+        name: "Permisos",
+        icon: "admin_panel_settings",
+        path: "/dashboard/permisos",
+      });
+    }
+    return links;
+  };
+
+  const dynamicLinks = getSidebarLinks();
+
+  const currentViewName =
+    dynamicLinks.find((l) => l.path === location.pathname)?.name || "Dashboard";
 
   return (
     <div className="h-screen font-display text-white flex p-4 gap-4 relative overflow-hidden">
@@ -219,9 +256,11 @@ export default function DashboardLayout() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
-            {sidebarLinks.map((link) => {
+          <nav className="flex-1 overflow-y-auto overflow-x-hidden space-y-1.5 p-3 custom-scrollbar">
+            {dynamicLinks.map((link) => {
               const isActive = location.pathname === link.path;
+              const isAccent = isActive;
+
               return (
                 <Link
                   key={link.path}
@@ -333,12 +372,12 @@ export default function DashboardLayout() {
                       chevron_right
                     </span>
                     <span className="font-bold text-white/90 tracking-wide uppercase">
-                      {currentView}
+                      {currentViewName}
                     </span>
                   </>
                 ) : (
                   <h1 className="font-bold text-white/90 tracking-wide uppercase">
-                    {currentView}
+                    {currentViewName}
                   </h1>
                 )}
               </div>

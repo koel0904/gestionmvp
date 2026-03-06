@@ -139,6 +139,8 @@ router.get("/me", authenticateToken, async (req, res) => {
       email: user.email,
       name: user.name,
       role: user.role, // included role if exists
+      permissions: user.permissions,
+      type: userType, // also expose if owner or user
     };
     return res.json({ user: safeUser });
   } catch {

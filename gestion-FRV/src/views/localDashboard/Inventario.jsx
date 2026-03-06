@@ -5,6 +5,7 @@ import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
 import { smartMatch } from "../../utils/smartSearch";
+import usePermissions from "../../hooks/usePermissions";
 
 export default function Inventario() {
   const { selectedLocal } = useLocal();
@@ -14,6 +15,10 @@ export default function Inventario() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Permissions
+  const { canView, checkAccess } = usePermissions("inventario");
+
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -256,6 +261,24 @@ export default function Inventario() {
     );
   }
 
+  if (!canView) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 animate-in fade-in zoom-in-95 duration-300">
+        <div className="size-16 rounded-2xl glass-panel border-red-500/20 bg-red-500/10 flex items-center justify-center shadow-lg">
+          <span className="material-symbols-outlined text-4xl text-red-400">
+            lock
+          </span>
+        </div>
+        <h2 className="text-2xl font-bold text-white tracking-tight">
+          Acceso Denegado
+        </h2>
+        <p className="text-white/60 font-medium max-w-sm">
+          No tienes permisos para acceder a la vista de Inventario.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5 animate-in fade-in zoom-in-95 duration-300 h-full flex flex-col">
       {/* ── Header ── */}
@@ -276,7 +299,9 @@ export default function Inventario() {
           </div>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() =>
+            checkAccess("add", () => setIsModalOpen(true), showToast)
+          }
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-light text-white font-bold tracking-wide shadow-[0_2px_8px_rgba(167,139,250,0.4)] hover:shadow-[0_0_24px_rgba(167,139,250,0.55)] transition-all transform hover:-translate-y-0.5"
         >
           <span className="material-symbols-outlined text-[18px]">add_box</span>
@@ -415,7 +440,13 @@ export default function Inventario() {
                     <td className="py-3 px-4 text-right align-middle">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => startEdit(item)}
+                          onClick={() =>
+                            checkAccess(
+                              "edit",
+                              () => startEdit(item),
+                              showToast,
+                            )
+                          }
                           className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-sky-500/20 hover:border-sky-400 border border-transparent hover:shadow-[0_0_20px_rgba(56,189,248,0.5),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
                           title="Editar"
                         >
@@ -424,7 +455,13 @@ export default function Inventario() {
                           </span>
                         </button>
                         <button
-                          onClick={() => setDeleteConfirm(item.id)}
+                          onClick={() =>
+                            checkAccess(
+                              "delete",
+                              () => setDeleteConfirm(item.id),
+                              showToast,
+                            )
+                          }
                           className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-red-600 hover:border-red-400 border border-transparent hover:shadow-[0_0_20px_rgba(239,68,68,0.8),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
                           title="Eliminar"
                         >

@@ -31,7 +31,7 @@ export default function GlassModal({
       />
 
       {/* Modal Container */}
-      <div className="relative z-10 w-full max-w-md glass-panel rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.6)] animate-in zoom-in-95 duration-300">
+      <div className="relative z-10 w-full max-w-md max-h-[85vh] flex flex-col glass-panel rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.6)] animate-in zoom-in-95 duration-300">
         {/* Decorative Top Line */}
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary-light/50 to-transparent" />
 
@@ -61,7 +61,7 @@ export default function GlassModal({
         </div>
 
         {/* Modal Content */}
-        <div className="p-6">{children}</div>
+        <div className="p-6 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );

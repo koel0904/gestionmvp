@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useLocal } from "../../context/LocalContext";
+import GlassModal from "../../components/GlassModal";
 import GlassToast from "../../components/GlassToast";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { selectedLocal, changeLocal, userLocales, loading } = useLocal();
+  const { selectedLocal, changeLocal, userLocales, setUserLocales, loading } =
+    useLocal();
 
   if (loading) {
     return (
@@ -26,6 +28,15 @@ export default function Dashboard() {
       local={selectedLocal}
       onBack={() => changeLocal(null)}
       user={user}
+      onLocalUpdated={(updatedLocal) => {
+        // update the selected local + userLocales list
+        changeLocal({ ...selectedLocal, ...updatedLocal });
+        setUserLocales((prev) =>
+          prev.map((l) =>
+            l.id === updatedLocal.id ? { ...l, ...updatedLocal } : l,
+          ),
+        );
+      }}
     />
   );
 }
@@ -137,9 +148,16 @@ function LocalsGrid({ locales, onSelect, user }) {
               </p>
 
               <div className="flex items-center justify-between mt-auto">
-                <span className="glass-badge-purple px-2.5 py-1 rounded-lg text-xs font-semibold text-white capitalize">
-                  {local.role}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="glass-badge-purple px-2.5 py-1 rounded-lg text-xs font-semibold text-white capitalize">
+                    {local.role}
+                  </span>
+                  {local.active === false && (
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-widest bg-red-500/20 text-red-400 border border-red-500/30">
+                      Inactivo
+                    </span>
+                  )}
+                </div>
                 <span className="material-symbols-outlined text-white/30 group-hover:text-primary-light transition-all group-hover:translate-x-1">
                   arrow_forward
                 </span>
@@ -314,13 +332,68 @@ function LocalsGrid({ locales, onSelect, user }) {
   );
 }
 
-function LocalDetailView({ local, onBack }) {
+function LocalDetailView({ local, onBack, user, onLocalUpdated }) {
   const [stats, setStats] = useState({
     revenue: 0,
     orders: 0,
     customers: 0,
     products: 0,
   });
+
+  const isOwner = user?.role === "owner";
+
+  // Edit local state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editData, setEditData] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ visible: true, message, type });
+  };
+
+  const openEdit = () => {
+    setEditData({
+      name: local.name || "",
+      address: local.address || "",
+      phone: local.phone || "",
+      email: local.email || "",
+      active: local.active !== undefined ? local.active : true,
+    });
+    setEditOpen(true);
+  };
+
+  const handleSaveLocal = async (e) => {
+    e.preventDefault();
+    if (!editData.name?.trim()) {
+      showToast("El nombre del local es obligatorio", "error");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const res = await fetch(`http://localhost:3000/api/locales/${local.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(editData),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Error al actualizar el local");
+      }
+      onLocalUpdated(data.local);
+      setEditOpen(false);
+      showToast("Local actualizado exitosamente");
+    } catch (err) {
+      showToast(err.message, "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchStats() {
@@ -398,13 +471,35 @@ function LocalDetailView({ local, onBack }) {
             arrow_back
           </span>
         </button>
-        <div>
+        <div className="flex-1">
           <h2 className="text-xl font-bold text-white tracking-tight">
             {local.name} Dashboard
           </h2>
           <p className="text-xs text-white/50 font-medium">{local.address}</p>
         </div>
+        {isOwner && (
+          <button
+            onClick={openEdit}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-button text-white/70 hover:text-white font-bold tracking-wide hover:bg-sky-500/20 hover:border-sky-400 border border-transparent hover:shadow-[0_0_20px_rgba(56,189,248,0.5),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[18px]">edit</span>
+            <span className="hidden sm:inline text-sm">Editar Local</span>
+          </button>
+        )}
       </div>
+
+      {/* Inactive banner */}
+      {local.active === false && (
+        <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-red-500/10 border border-red-500/30 mb-1">
+          <span className="material-symbols-outlined text-red-400 text-[20px]">
+            lock
+          </span>
+          <p className="text-sm text-red-300 font-medium">
+            Este local está <strong>inactivo</strong>. No se permiten cambios
+            hasta que un owner lo reactive.
+          </p>
+        </div>
+      )}
 
       {/* ── Stat Cards Grid ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -535,6 +630,125 @@ function LocalDetailView({ local, onBack }) {
           </div>
         </div>
       </div>
+
+      {/* ── Edit Local Modal ── */}
+      <GlassModal
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        title={`Editar ${local.name}`}
+        icon="edit"
+      >
+        <form onSubmit={handleSaveLocal} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+              Nombre del Local *
+            </label>
+            <input
+              required
+              type="text"
+              value={editData.name || ""}
+              onChange={(e) =>
+                setEditData({ ...editData, name: e.target.value })
+              }
+              placeholder="Ej: Sucursal Centro"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+              Dirección
+            </label>
+            <input
+              type="text"
+              value={editData.address || ""}
+              onChange={(e) =>
+                setEditData({ ...editData, address: e.target.value })
+              }
+              placeholder="Ej: Av. Principal #123"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+                Teléfono
+              </label>
+              <input
+                type="tel"
+                value={editData.phone || ""}
+                onChange={(e) =>
+                  setEditData({ ...editData, phone: e.target.value })
+                }
+                placeholder="555-1234"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
+                Email
+              </label>
+              <input
+                type="email"
+                value={editData.email || ""}
+                onChange={(e) =>
+                  setEditData({ ...editData, email: e.target.value })
+                }
+                placeholder="local@email.com"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
+              />
+            </div>
+          </div>
+          {/* Active toggle */}
+          <div className="flex items-center justify-between px-1 py-3 border-t border-white/10 mt-2">
+            <div>
+              <p className="text-sm font-bold text-white">Estado del Local</p>
+              <p className="text-xs text-white/50">
+                {editData.active
+                  ? "El local está activo y operativo"
+                  : "El local está inactivo — no se permiten cambios"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setEditData({ ...editData, active: !editData.active })
+              }
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors cursor-pointer ${
+                editData.active ? "bg-emerald-500" : "bg-white/20"
+              }`}
+            >
+              <span
+                className={`inline-block size-5 transform rounded-full bg-white transition-transform shadow-sm ${
+                  editData.active ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+          <div className="pt-4 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setEditOpen(false)}
+              className="px-4 py-2.5 rounded-xl text-white/60 font-medium hover:bg-white/5 hover:text-white transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary-light text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(124,58,237,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isSaving ? "Guardando..." : "Guardar Cambios"}
+            </button>
+          </div>
+        </form>
+      </GlassModal>
+
+      <GlassToast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, visible: false })}
+      />
     </div>
   );
 }

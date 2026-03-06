@@ -86,6 +86,7 @@ class userRepository {
       email: record.email,
       name: record.name,
       role: record.role,
+      permissions: record.permissions,
     };
   }
 }
