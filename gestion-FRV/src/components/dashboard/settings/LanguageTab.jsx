@@ -1,4 +1,4 @@
-import { useLang } from "../../context/LangContext";
+import { useLang } from "../../../context/LangContext";
 import Section from "./Section";
 import FieldRow from "./FieldRow";
 
@@ -32,8 +32,8 @@ export default function LanguageTab() {
                             key={l.code}
                             onClick={() => lang !== l.code && toggleLang()}
                             className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 text-left cursor-pointer group ${lang === l.code
-                                    ? "bg-white/[0.06] border-white/20 shadow-lg"
-                                    : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/10"
+                                ? "bg-white/[0.06] border-white/20 shadow-lg"
+                                : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/10"
                                 }`}
                         >
                             <span className="text-3xl shrink-0">{l.flag}</span>

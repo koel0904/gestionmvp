@@ -1,7 +1,7 @@
-import StatCard from "../../components/analytics/StatCard";
-import MiniBarChart from "../../components/analytics/MiniBarChart";
-import ActivityFeed from "../../components/analytics/ActivityFeed";
-import TopTable from "../../components/analytics/TopTable";
+import StatCard from "../../components/dashboard/analytics/StatCard";
+import MiniBarChart from "../../components/dashboard/analytics/MiniBarChart";
+import ActivityFeed from "../../components/dashboard/analytics/ActivityFeed";
+import TopTable from "../../components/dashboard/analytics/TopTable";
 
 // ── Sample data (replace with real API calls when ready) ─────────────
 const KPI_CARDS = [
@@ -171,8 +171,8 @@ export default function Analitics() {
                             key={p}
                             onClick={() => setPeriod(p)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${period === p
-                                    ? "bg-white/[0.08] text-white border border-white/10 shadow"
-                                    : "text-white/40 hover:text-white/70"
+                                ? "bg-white/[0.08] text-white border border-white/10 shadow"
+                                : "text-white/40 hover:text-white/70"
                                 }`}
                         >
                             {p}

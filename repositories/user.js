@@ -68,12 +68,30 @@ class userRepository {
 
   static async createUser(name, email, password) {
     const saltRounds = parseInt(process.env.SALT) || 10;
+    const verifyUser = await this.getUserByEmail(email);
+    if (verifyUser) {
+      return { error: "User already exists" };
+    }
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const newUser = await prisma.user.create({
       data: { name, email, password: hashedPassword },
     });
     const user = await this.getUserById(newUser.id);
     return user;
+  }
+
+  static async createOwner(name, email, password) {
+    const saltRounds = parseInt(process.env.SALT) || 10;
+    const verifyOwner = await this.getUserByEmail(email);
+    if (verifyOwner) {
+      return { error: "Owner already exists" };
+    }
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const newOwner = await prisma.owner.create({
+      data: { name, email, password: hashedPassword },
+    });
+    const owner = await this.getUserById(newOwner.id, "owner");
+    return owner;
   }
 
   static async getUserById(id, type = "user") {

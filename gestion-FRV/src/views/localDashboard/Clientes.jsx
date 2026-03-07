@@ -7,6 +7,11 @@ import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
 import EditForm from "../../components/EditForm";
 import { smartMatch } from "../../utils/smartSearch";
 import usePermissions from "../../hooks/usePermissions";
+import { getClientes, createCliente, deleteCliente } from "../../services/api/dashboardClients";
+
+import ClientesHeader from "../../components/dashboard/clientes/ClientesHeader";
+import ClientesTable from "../../components/dashboard/clientes/ClientesTable";
+import NewClienteModal from "../../components/dashboard/clientes/NewClienteModal";
 
 export default function Clientes() {
   const { selectedLocal } = useLocal();
@@ -36,23 +41,12 @@ export default function Clientes() {
     if (!deleteConfirm) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/locales/${selectedLocal.id}/clientes/${deleteConfirm}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-      if (res.ok) {
-        setClientes((prev) => prev.filter((c) => c.id !== deleteConfirm));
-        showToast("Cliente eliminado exitosamente");
-      } else {
-        const err = await res.json();
-        showToast(err.error || "Error al eliminar cliente", "error");
-      }
+      await deleteCliente(selectedLocal.id, deleteConfirm);
+      setClientes((prev) => prev.filter((c) => c.id !== deleteConfirm));
+      showToast("Cliente eliminado exitosamente");
     } catch (err) {
       console.error(err);
-      showToast("Error de red al eliminar", "error");
+      showToast(err.message || "Error de red al eliminar", "error");
     } finally {
       setIsDeleting(false);
       setDeleteConfirm(null);
@@ -74,16 +68,8 @@ export default function Clientes() {
 
     async function fetchData() {
       try {
-        const res = await fetch(
-          `http://localhost:3000/api/locales/${selectedLocal.id}/clientes`,
-          {
-            credentials: "include",
-          },
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setClientes(data);
-        }
+        const data = await getClientes(selectedLocal.id);
+        setClientes(data);
       } catch (err) {
         console.error("Failed to fetch clientes", err);
       } finally {
@@ -101,31 +87,16 @@ export default function Clientes() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/locales/${selectedLocal.id}/clientes`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(formData),
-        },
+      const result = await createCliente(selectedLocal.id, formData);
+      setClientes((prev) =>
+        [...prev, result.cliente].sort((a, b) => a.name.localeCompare(b.name)),
       );
-
-      if (res.ok) {
-        const data = await res.json();
-        setClientes((prev) =>
-          [...prev, data.cliente].sort((a, b) => a.name.localeCompare(b.name)),
-        );
-        setIsModalOpen(false);
-        setFormData({ name: "", email: "", phone: "" });
-        showToast("Cliente agregado exitosamente");
-      } else {
-        const err = await res.json();
-        showToast(err.error || "Failed to create client", "error");
-      }
+      setIsModalOpen(false);
+      setFormData({ name: "", email: "", phone: "" });
+      showToast("Cliente agregado exitosamente");
     } catch (err) {
       console.error(err);
-      showToast("Network error creating client", "error");
+      showToast(err.message || "Network error creating client", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -179,256 +150,28 @@ export default function Clientes() {
 
   return (
     <div className="space-y-5 animate-in fade-in zoom-in-95 duration-300 h-full flex flex-col">
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between glass-panel rounded-2xl p-5 border border-white/10 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="size-12 rounded-xl bg-gradient-to-br from-primary/30 to-primary-dark/20 glass-subtle flex items-center justify-center border border-primary/20 shadow-inner">
-            <span className="material-symbols-outlined text-[24px] text-primary-light drop-shadow-md">
-              groups
-            </span>
-          </div>
-          <div>
-            <h2 className="text-2xl font-black text-white tracking-tight">
-              Clientes
-            </h2>
-            <p className="text-sm text-white/50 font-medium">
-              Customer directory for {selectedLocal.name}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={() =>
-            checkAccess("add", () => setIsModalOpen(true), showToast)
-          }
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-light text-white font-bold tracking-wide shadow-[0_2px_8px_rgba(167,139,250,0.4)] hover:shadow-[0_0_24px_rgba(167,139,250,0.55)] transition-all transform hover:-translate-y-0.5"
-        >
-          <span className="material-symbols-outlined text-[18px]">
-            person_add
-          </span>
-          <span className="hidden sm:inline">Add Customer</span>
-        </button>
-      </div>
+      <ClientesHeader
+        selectedLocal={selectedLocal}
+        onNewCliente={() => checkAccess("add", () => setIsModalOpen(true), showToast)}
+      />
 
-      {/* ── Content / Table Area ── */}
-      <div className="flex-1 glass-heavy rounded-2xl p-6 relative overflow-hidden flex flex-col min-h-[400px]">
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+      <ClientesTable
+        loading={loading}
+        clientes={filteredClientes}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        onEdit={(c) => checkAccess("edit", () => setEditingCliente(c), showToast)}
+        onDelete={(id) => checkAccess("delete", () => setDeleteConfirm(id), showToast)}
+      />
 
-        <div className="flex items-center justify-between mb-6 shrink-0">
-          <h3 className="text-sm font-bold text-white/80 uppercase tracking-widest">
-            Customer List
-          </h3>
-          <div className="relative w-64">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-[18px]">
-              search
-            </span>
-            <input
-              type="text"
-              placeholder="Search customers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all font-medium"
-            />
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="size-8 border-4 border-white/10 border-t-primary rounded-full animate-spin"></div>
-          </div>
-        ) : clientes.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <div className="size-20 rounded-2xl glass-panel flex items-center justify-center mb-5 shadow-inner">
-              <span className="material-symbols-outlined text-4xl text-white/30 drop-shadow-md">
-                group_add
-              </span>
-            </div>
-            <p className="text-white/60 text-lg font-bold mb-1">
-              No customers found
-            </p>
-            <p className="text-white/40 text-sm font-medium">
-              Get started by adding a new customer.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto flex-1 h-full">
-            <table className="w-full text-left border-collapse min-w-[600px]">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider">
-                    Customer Info
-                  </th>
-                  <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider hidden md:table-cell">
-                    Contact
-                  </th>
-                  <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider hidden lg:table-cell">
-                    Address
-                  </th>
-                  <th className="py-4 px-4 text-xs font-bold text-white/50 uppercase tracking-wider text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredClientes.map((c) => (
-                  <tr
-                    key={c.id}
-                    className="border-b border-white/5 hover:bg-white/5 transition-colors group"
-                  >
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                          <span className="material-symbols-outlined text-[20px] text-primary-light">
-                            person
-                          </span>
-                        </div>
-                        <div>
-                          <div className="font-bold text-white max-w-[200px] truncate">
-                            {c.name || "Unknown Customer"}
-                          </div>
-                          {c.email && (
-                            <div className="text-xs text-white/50 hidden sm:block max-w-[200px] truncate">
-                              {c.email}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 hidden md:table-cell align-middle">
-                      <div className="flex flex-col gap-1">
-                        {c.phone && (
-                          <div className="text-sm text-white/70 flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-[14px]">
-                              phone
-                            </span>{" "}
-                            {c.phone}
-                          </div>
-                        )}
-                        {!c.email && !c.phone && (
-                          <span className="text-sm text-white/30 italic">
-                            No contact info
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 hidden lg:table-cell align-middle">
-                      <div className="text-sm text-white/60 truncate max-w-[200px]">
-                        {c.direccion || (
-                          <span className="italic text-white/30">
-                            No address provided
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-right align-middle">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() =>
-                            checkAccess(
-                              "edit",
-                              () => setEditingCliente(c),
-                              showToast,
-                            )
-                          }
-                          className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-sky-500/20 hover:border-sky-400 border border-transparent hover:shadow-[0_0_20px_rgba(56,189,248,0.5),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
-                          title="Editar"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">
-                            edit
-                          </span>
-                        </button>
-                        <button
-                          onClick={() =>
-                            checkAccess(
-                              "delete",
-                              () => setDeleteConfirm(c.id),
-                              showToast,
-                            )
-                          }
-                          className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-red-600 hover:border-red-400 border border-transparent hover:shadow-[0_0_20px_rgba(239,68,68,0.8),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
-                          title="Eliminar"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">
-                            delete
-                          </span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <GlassModal
+      <NewClienteModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="New Customer"
-        icon="person_add"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
-              Customer Name *
-            </label>
-            <input
-              required
-              type="text"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder="e.g. John Doe"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              placeholder="john@example.com"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-              placeholder="555-0123"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
-            />
-          </div>
-          <div className="pt-4 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2.5 rounded-xl text-white/60 font-medium hover:bg-white/5 hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary-light text-white font-bold tracking-wide hover:shadow-[0_0_20px_rgba(124,58,237,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Saving..." : "Create Customer"}
-            </button>
-          </div>
-        </form>
-      </GlassModal>
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+        formData={formData}
+        setFormData={setFormData}
+      />
 
       <GlassModal
         isOpen={!!editingCliente}
