@@ -101,10 +101,11 @@ model Inventario {
 }
 
 model Clientes {
-  id    String  @id @default(uuid())
-  name  String
-  email String  @unique
-  phone String?
+  id        String  @id @default(uuid())
+  name      String
+  email     String  @unique
+  phone     String?
+  direccion String?
 
   local   Local   @relation(fields: [localId], references: [id])
   localId String

@@ -7,7 +7,11 @@ import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
 import EditForm from "../../components/EditForm";
 import { smartMatch } from "../../utils/smartSearch";
 import usePermissions from "../../hooks/usePermissions";
-import { getClientes, createCliente, deleteCliente } from "../../services/api/dashboardClients";
+import {
+  getClientes,
+  createCliente,
+  deleteCliente,
+} from "../../services/api/dashboardClients";
 
 import ClientesHeader from "../../components/dashboard/clientes/ClientesHeader";
 import ClientesTable from "../../components/dashboard/clientes/ClientesTable";
@@ -30,7 +34,12 @@ export default function Clientes() {
     type: "success",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    direccion: "",
+  });
 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -92,7 +101,7 @@ export default function Clientes() {
         [...prev, result.cliente].sort((a, b) => a.name.localeCompare(b.name)),
       );
       setIsModalOpen(false);
-      setFormData({ name: "", email: "", phone: "" });
+      setFormData({ name: "", email: "", phone: "", direccion: "" });
       showToast("Cliente agregado exitosamente");
     } catch (err) {
       console.error(err);
@@ -152,7 +161,9 @@ export default function Clientes() {
     <div className="space-y-5 animate-in fade-in zoom-in-95 duration-300 h-full flex flex-col">
       <ClientesHeader
         selectedLocal={selectedLocal}
-        onNewCliente={() => checkAccess("add", () => setIsModalOpen(true), showToast)}
+        onNewCliente={() =>
+          checkAccess("add", () => setIsModalOpen(true), showToast)
+        }
       />
 
       <ClientesTable
@@ -160,8 +171,12 @@ export default function Clientes() {
         clientes={filteredClientes}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        onEdit={(c) => checkAccess("edit", () => setEditingCliente(c), showToast)}
-        onDelete={(id) => checkAccess("delete", () => setDeleteConfirm(id), showToast)}
+        onEdit={(c) =>
+          checkAccess("edit", () => setEditingCliente(c), showToast)
+        }
+        onDelete={(id) =>
+          checkAccess("delete", () => setDeleteConfirm(id), showToast)
+        }
       />
 
       <NewClienteModal
@@ -185,6 +200,7 @@ export default function Clientes() {
                 name: editingCliente.name,
                 email: editingCliente.email || "",
                 phone: editingCliente.phone || "",
+                direccion: editingCliente.direccion || "",
               }}
               apiUrl={`/locales/${selectedLocal.id}/clientes/${editingCliente.id}`}
               method="PUT"

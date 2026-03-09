@@ -244,19 +244,24 @@ class localRepository {
     return prisma.clientes.create({
       data: {
         ...data,
+        direccion: data.direccion || null,
         localId,
       },
     });
   }
 
   static async updateCliente(id, data) {
+    const updateData = {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+    };
+    if (data.direccion !== undefined)
+      updateData.direccion = data.direccion || null;
+
     return prisma.clientes.update({
       where: { id },
-      data: {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-      },
+      data: updateData,
     });
   }
 
