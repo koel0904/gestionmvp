@@ -94,6 +94,31 @@ class userRepository {
     return owner;
   }
 
+  static async updateProfile(id, type, data) {
+    const model = type === "owner" ? prisma.owner : prisma.user;
+    
+    // Solo permitimos actualizar ciertos campos
+    const updateData = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.email !== undefined) updateData.email = data.email;
+    
+    // Solo usuarios pueden actualizar su posición
+    if (type === "user" && data.position !== undefined) {
+      updateData.position = data.position;
+    }
+
+    try {
+      const updated = await model.update({
+        where: { id },
+        data: updateData
+      });
+      return { ...updated, _type: type };
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      throw error;
+    }
+  }
+
   static async getUserById(id, type = "user") {
     const model = type === "owner" ? prisma.owner : prisma.user;
     const record = await model.findUnique({ where: { id } });
@@ -104,6 +129,7 @@ class userRepository {
       email: record.email,
       name: record.name,
       role: record.role,
+      position: record.position || null,
       permissions: record.permissions,
     };
   }

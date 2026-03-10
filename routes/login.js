@@ -139,12 +139,41 @@ router.get("/me", authenticateToken, async (req, res) => {
       email: user.email,
       name: user.name,
       role: user.role, // included role if exists
+      position: user.position || null, // expose position to frontend
       permissions: user.permissions,
       type: userType, // also expose if owner or user
     };
+    console.log(`[DEBUG] GET /me resolved for ${safeUser.email}. Position is: "${safeUser.position}"`);
     return res.json({ user: safeUser });
   } catch {
     res.status(500).json({ error: "Error fetching user" });
+  }
+});
+
+router.put("/profile", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const userType = req.user.userType || "user";
+    const { name, email, position } = req.body;
+
+    // Verificar si el correo ya pertenece a otro
+    if (email) {
+      const existingEmail = await userRepository.getUserByEmail(email);
+      if (existingEmail && existingEmail.id !== userId) {
+        return res.status(400).json({ error: "Este correo ya está en uso" });
+      }
+    }
+
+    const updatedUser = await userRepository.updateProfile(userId, userType, {
+      name,
+      email,
+      position
+    });
+
+    return res.json({ message: "Perfil actualizado correctamente" });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return res.status(500).json({ error: "No se pudo actualizar el perfil" });
   }
 });
 

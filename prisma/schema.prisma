@@ -33,6 +33,7 @@ model Local {
   clientes    Clientes[]
   vehiculos   Vehiculos[]
   anuncios    Anuncio[]
+  tareas      Tarea[]
 }
 
 model User {
@@ -56,6 +57,7 @@ model User {
   owner    Owner @relation(fields: [ownerId], references: [id])
 
   vehiculos   Vehiculos[]
+  tareasAsignadas Tarea[] @relation("UserTareas")
 }
 
 model Owner {
@@ -162,4 +164,24 @@ model Anuncio {
 
   authorId  String
   author    Owner    @relation(fields: [authorId], references: [id])
+}
+
+model Tarea {
+  id          String   @id @default(uuid())
+  title       String
+  description String?  @db.Text
+  status      String   @default("Sin realizar") // "Sin realizar", "En proceso", "Realizada", "No se pudo completar", "Fuera de tiempo"
+  reason      String?  @db.Text // Razón si "No se pudo completar"
+  deadline    DateTime
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // ID y tipo ("owner" o "user") de quien creó la tarea para control
+  creatorId   String
+  creatorType String
+
+  localId     String
+  local       Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
+
+  assignedUsers User[] @relation("UserTareas")
 }

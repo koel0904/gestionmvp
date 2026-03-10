@@ -16,6 +16,7 @@ const sidebarLinks = [
   { name: "Usuarios", icon: "manage_accounts", path: "/dashboard/usuarios" },
   { name: "Vehículos", icon: "directions_car", path: "/dashboard/vehiculos" },
   { name: "Foro", icon: "campaign", path: "/dashboard/foro" },
+  { name: "Tareas", icon: "task", path: "/dashboard/tareas" },
   { name: "Analitics", icon: "analytics", path: "/dashboard/analitics" },
   { name: "Settings", icon: "settings", path: "/dashboard/settings" },
 ];
@@ -53,8 +54,8 @@ export default function DashboardLayout() {
     if (user?.role !== "owner" && user?.type !== "owner") {
       links = links.filter((link) => {
         const viewName = link.name.toLowerCase();
-        // Always show Overview, Settings, Analitics, and Foro (everyone can read)
-        if (["overview", "settings", "analitics", "foro"].includes(viewName))
+        // Always show Overview, Settings, Analitics, Foro and Tareas (everyone can read)
+        if (["overview", "settings", "analitics", "foro", "tareas"].includes(viewName))
           return true;
 
         // Block Vehículos -> vehiculos translation
@@ -68,15 +69,6 @@ export default function DashboardLayout() {
       });
     }
 
-    if (user?.role === "owner" || user?.type === "owner") {
-      // Insert Permisos right before Settings
-      const settingsIndex = links.findIndex((l) => l.name === "Settings");
-      links.splice(settingsIndex !== -1 ? settingsIndex : links.length, 0, {
-        name: "Permisos",
-        icon: "admin_panel_settings",
-        path: "/dashboard/permisos",
-      });
-    }
     return links;
   };
 

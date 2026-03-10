@@ -84,6 +84,23 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
+  async function updateProfile(profileData) {
+    const res = await fetch(`${API_URL}/profile`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(profileData),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Profile update failed");
+    }
+
+    // After updating, refresh the user state automatically
+    return await refresh();
+  }
+
   async function logout() {
     // Clear cookie by calling a logout endpoint or just clear state
     // For now, clear the cookie by making a request or clearing state
@@ -99,9 +116,9 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, refresh }}
+      value={{ user, loading, login, register, logout, refresh, updateProfile }}
     >
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }

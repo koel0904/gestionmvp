@@ -43,6 +43,11 @@ export default function requirePermission(viewName, action) {
       // 3. Evaluate permissions JSON
       // If permissions object exists and has the view/action set to true
       const perms = user.permissions || {};
+      
+      // Admins bypass all view checks as well
+      if (perms?.admin === true) {
+        return next();
+      }
       const viewPerms = perms[viewName] || {};
 
       if (viewPerms[action] === true) {

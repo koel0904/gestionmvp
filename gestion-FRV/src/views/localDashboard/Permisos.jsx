@@ -11,7 +11,7 @@ import {
 import PermisosHeader from "../../components/dashboard/permisos/PermisosHeader";
 import PermisosList from "../../components/dashboard/permisos/PermisosList";
 
-export default function Permisos() {
+export default function Permisos({ isSettingsTab = false }) {
   const { selectedLocal } = useLocal();
   const { user } = useAuth();
   const [usuarios, setUsuarios] = useState([]);
@@ -29,7 +29,7 @@ export default function Permisos() {
   };
 
   // Only owners can access this view
-  if (user?.role !== "owner" && user?.type !== "owner") {
+  if (!isSettingsTab && user?.role !== "owner" && user?.type !== "owner") {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -125,7 +125,7 @@ export default function Permisos() {
   }
 
   return (
-    <div className="space-y-5 animate-in fade-in zoom-in-95 duration-300 h-full flex flex-col">
+    <div className={`space-y-5 animate-in fade-in zoom-in-95 duration-300 flex flex-col ${isSettingsTab ? '' : 'h-full'}`}>
       <PermisosHeader selectedLocal={selectedLocal} />
 
       <PermisosList

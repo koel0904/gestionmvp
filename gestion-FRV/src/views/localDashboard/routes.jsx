@@ -11,8 +11,8 @@ import Usuarios from "./Usuarios";
 import Vehiculos from "./Vehiculos";
 import Settings from "./Settings";
 import Analitics from "./Analitics";
-import Permisos from "./Permisos";
 import Foro from "./Foro";
+import Tareas from "./Tareas";
 
 const DashboardRoutes = (
   <Route
@@ -32,7 +32,7 @@ const DashboardRoutes = (
     <Route path="usuarios" element={<Usuarios />} />
     <Route path="vehiculos" element={<Vehiculos />} />
     <Route path="foro" element={<Foro />} />
-    <Route path="permisos" element={<Permisos />} />
+    <Route path="tareas" element={<Tareas />} />
     <Route path="settings" element={<Settings />} />
     <Route path="analitics" element={<Analitics />} />
     {/* más subrutas aquí */}

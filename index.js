@@ -7,13 +7,14 @@ import cors from "cors";
 import wss from "./ws.js";
 
 import locales from "./routes/locales.js";
+import tareas from "./routes/tareas.js";
 
 const app = express();
 
 app.use(
   cors({
     origin: ["http://localhost:5173", "http://localhost:5174"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   }),
 );
@@ -34,7 +35,7 @@ const __dirname = path.dirname(__filename);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.use("/api", login, register, locales);
+app.use("/api", login, register, locales, tareas);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
