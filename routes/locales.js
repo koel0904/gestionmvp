@@ -615,4 +615,85 @@ router.delete(
   },
 );
 
+// ==========================================
+// ANUNCIOS / FORO
+// ==========================================
+
+// Obtener anuncios
+router.get(
+  "/locales/:id/anuncios",
+  authenticateToken,
+  requireActiveLocal,
+  async (req, res) => {
+    try {
+      const anuncios = await localRepository.getAnuncios(req.params.id);
+      res.json(anuncios);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Error fetch anuncios" });
+    }
+  },
+);
+
+// Crear anuncio
+router.post(
+  "/locales/:id/anuncios",
+  authenticateToken,
+  requireActiveLocal,
+  async (req, res) => {
+    try {
+      if (req.user.userType !== "owner") {
+        return res.status(403).json({ error: "Solo dueños" });
+      }
+      const newAnuncio = await localRepository.createAnuncio(
+        req.params.id,
+        req.user.userId,
+        req.body,
+      );
+      res.json(newAnuncio);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Error post anuncio" });
+    }
+  },
+);
+
+// Borrar anuncio
+router.delete(
+  "/locales/:localId/anuncios/:id",
+  authenticateToken,
+  requireActiveLocal,
+  async (req, res) => {
+    try {
+      if (req.user.userType !== "owner") {
+        return res.status(403).json({ error: "Solo dueños" });
+      }
+      await localRepository.deleteAnuncio(req.params.id);
+      res.json({ message: "Anuncio borrado" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Error delete anuncio" });
+    }
+  },
+);
+
+// Pin anuncio
+router.patch(
+  "/locales/:localId/anuncios/:id/pin",
+  authenticateToken,
+  requireActiveLocal,
+  async (req, res) => {
+    try {
+      if (req.user.userType !== "owner") {
+        return res.status(403).json({ error: "Solo dueños" });
+      }
+      const updated = await localRepository.togglePinAnuncio(req.params.id);
+      res.json(updated);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Error pin anuncio" });
+    }
+  },
+);
+
 export default router;

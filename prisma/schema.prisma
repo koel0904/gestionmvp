@@ -32,6 +32,7 @@ model Local {
   ventas      Ventas[]
   clientes    Clientes[]
   vehiculos   Vehiculos[]
+  anuncios    Anuncio[]
 }
 
 model User {
@@ -54,7 +55,7 @@ model User {
   ownerId  String
   owner    Owner @relation(fields: [ownerId], references: [id])
 
-  vehiculos Vehiculos[]
+  vehiculos   Vehiculos[]
 }
 
 model Owner {
@@ -70,6 +71,7 @@ model Owner {
 
   users  User[]
   locales Local[]
+  anuncios Anuncio[]
 }
 
 model Proveedores {
@@ -87,8 +89,8 @@ model Proveedores {
 model Inventario {
   id            String  @id @default(uuid())
   name          String
-  precio_compra Float
-  precio_venta  Float
+  precio_compra Decimal @db.Decimal(12, 2)
+  precio_venta  Decimal @db.Decimal(12, 2)
   stock         Int
   maxStock      Int     @default(100)
   estado        Boolean @default(true)
@@ -136,9 +138,9 @@ model Vehiculos {
   ultimoMantenimientoFecha   DateTime?
   ultimoMantenimientoKm      Int?
   proximoMantenimientoFecha  DateTime?
-  proximoMantenimientoKm     Int?
+  proximoMantenimientoKm    Int?
   frecuenciaKm          Int?
-  frecuenciaTiempo      String?   // "3 meses", "6 meses", etc.
+  frecuenciaTiempo      Int?   // "3 meses", "6 meses", etc.
   estado                Boolean   @default(true)
   imagen                String?
 
@@ -146,4 +148,18 @@ model Vehiculos {
 
   local   Local   @relation(fields: [localId], references: [id])
   localId String
+}
+
+model Anuncio {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  type      String   @default("info") // info, warning, success
+  isPinned  Boolean  @default(false)
+  fecha     DateTime @default(now())
+
+  localId   String
+  local     Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
+
+  authorId  String
+  author    Owner    @relation(fields: [authorId], references: [id])
 }

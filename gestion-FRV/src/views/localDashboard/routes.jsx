@@ -12,6 +12,7 @@ import Vehiculos from "./Vehiculos";
 import Settings from "./Settings";
 import Analitics from "./Analitics";
 import Permisos from "./Permisos";
+import Foro from "./Foro";
 
 const DashboardRoutes = (
   <Route
@@ -30,6 +31,7 @@ const DashboardRoutes = (
     <Route path="inventario" element={<Inventario />} />
     <Route path="usuarios" element={<Usuarios />} />
     <Route path="vehiculos" element={<Vehiculos />} />
+    <Route path="foro" element={<Foro />} />
     <Route path="permisos" element={<Permisos />} />
     <Route path="settings" element={<Settings />} />
     <Route path="analitics" element={<Analitics />} />

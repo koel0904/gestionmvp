@@ -266,6 +266,17 @@ class localRepository {
   }
 
   static async createVenta(localId, data) {
+    if (data.items && Array.isArray(data.items)) {
+      for (const item of data.items) {
+        if (item.inventarioId) {
+          await prisma.inventario.update({
+            where: { id: item.inventarioId },
+            data: { stock: { decrement: parseInt(item.cantidad) || 0 } },
+          });
+        }
+      }
+    }
+
     return prisma.ventas.create({
       data: {
         total: parseFloat(data.total),
@@ -278,6 +289,29 @@ class localRepository {
   }
 
   static async updateVenta(id, data) {
+    const oldVenta = await prisma.ventas.findUnique({ where: { id } });
+    if (oldVenta && Array.isArray(oldVenta.items)) {
+      for (const item of oldVenta.items) {
+        if (item.inventarioId) {
+          await prisma.inventario.update({
+            where: { id: item.inventarioId },
+            data: { stock: { increment: parseInt(item.cantidad) || 0 } },
+          });
+        }
+      }
+    }
+
+    if (data.items && Array.isArray(data.items)) {
+      for (const item of data.items) {
+        if (item.inventarioId) {
+          await prisma.inventario.update({
+            where: { id: item.inventarioId },
+            data: { stock: { decrement: parseInt(item.cantidad) || 0 } },
+          });
+        }
+      }
+    }
+
     return prisma.ventas.update({
       where: { id },
       data: {
@@ -330,6 +364,18 @@ class localRepository {
   }
 
   static async deleteVenta(id) {
+    const venta = await prisma.ventas.findUnique({ where: { id } });
+    if (venta && Array.isArray(venta.items)) {
+      for (const item of venta.items) {
+        if (item.inventarioId) {
+          await prisma.inventario.update({
+            where: { id: item.inventarioId },
+            data: { stock: { increment: parseInt(item.cantidad) || 0 } },
+          });
+        }
+      }
+    }
+
     return prisma.ventas.delete({
       where: { id },
     });
@@ -415,6 +461,44 @@ class localRepository {
   static async deleteVehiculo(id) {
     return prisma.vehiculos.delete({
       where: { id },
+    });
+  }
+
+  // == FORO / ANUNCIOS ==
+  static async getAnuncios(localId) {
+    return prisma.anuncio.findMany({
+      where: { localId },
+      include: {
+        author: { select: { id: true, name: true, role: true } },
+      },
+      orderBy: [{ isPinned: "desc" }, { fecha: "desc" }],
+    });
+  }
+
+  static async createAnuncio(localId, authorId, data) {
+    return prisma.anuncio.create({
+      data: {
+        content: data.content,
+        type: data.type || "info",
+        isPinned: data.isPinned || false,
+        localId,
+        authorId,
+      },
+    });
+  }
+
+  static async deleteAnuncio(id) {
+    return prisma.anuncio.delete({
+      where: { id },
+    });
+  }
+
+  static async togglePinAnuncio(id) {
+    const anuncio = await prisma.anuncio.findUnique({ where: { id } });
+    if (!anuncio) return null;
+    return prisma.anuncio.update({
+      where: { id },
+      data: { isPinned: !anuncio.isPinned },
     });
   }
 }

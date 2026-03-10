@@ -15,6 +15,7 @@ const sidebarLinks = [
   { name: "Inventario", icon: "inventory_2", path: "/dashboard/inventario" },
   { name: "Usuarios", icon: "manage_accounts", path: "/dashboard/usuarios" },
   { name: "Vehículos", icon: "directions_car", path: "/dashboard/vehiculos" },
+  { name: "Foro", icon: "campaign", path: "/dashboard/foro" },
   { name: "Analitics", icon: "analytics", path: "/dashboard/analitics" },
   { name: "Settings", icon: "settings", path: "/dashboard/settings" },
 ];
@@ -52,8 +53,8 @@ export default function DashboardLayout() {
     if (user?.role !== "owner" && user?.type !== "owner") {
       links = links.filter((link) => {
         const viewName = link.name.toLowerCase();
-        // Always show Overview, Settings, Analitics (unless we want to block them too)
-        if (["overview", "settings", "analitics"].includes(viewName))
+        // Always show Overview, Settings, Analitics, and Foro (everyone can read)
+        if (["overview", "settings", "analitics", "foro"].includes(viewName))
           return true;
 
         // Block Vehículos -> vehiculos translation

@@ -418,7 +418,7 @@ function LocalDetailView({ local, onBack, user, onLocalUpdated }) {
   const statCards = [
     {
       title: "Total Revenue",
-      value: `$${(stats.revenue || 0).toFixed(2)}`,
+      value: `$${Number(stats.revenue || 0).toFixed(2)}`,
       change: "+0%",
       icon: "payments",
       gradient: "from-primary/30 to-primary/10",
