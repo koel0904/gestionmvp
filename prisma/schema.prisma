@@ -14,7 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model Local {
   id      String  @id @default(uuid())
   name    String
@@ -24,65 +23,67 @@ model Local {
   active  Boolean @default(true)
 
   ownerId String
-  owner   Owner @relation(fields: [ownerId], references: [id])
+  owner   Owner  @relation(fields: [ownerId], references: [id])
 
-  users       User[]
-  proveedores Proveedores[]
-  inventario  Inventario[]
-  ventas      Ventas[]
-  clientes    Clientes[]
-  vehiculos   Vehiculos[]
-  anuncios    Anuncio[]
-  tareas      Tarea[]
+  users         User[]
+  proveedores   Proveedores[]
+  inventario    Inventario[]
+  ventas        Ventas[]
+  clientes      Clientes[]
+  vehiculos     Vehiculos[]
+  anuncios      Anuncio[]
+  tareas        Tarea[]
+  notifications Notifications[]
 }
 
 model User {
-  id          String   @id @default(uuid())
-  name        String
-  email       String   @unique
-  phone       String?
-  password    String   @db.VarChar(255)
-  role        String   @default("user")
-  position    String?
-  active      Boolean  @default(true)
-  permissions Json     @default("[]")
-  createdAt   DateTime @default(now())
-  twoFactorCode  String? @db.VarChar(255)
+  id                  String    @id @default(uuid())
+  name                String
+  email               String    @unique
+  phone               String?
+  password            String    @db.VarChar(255)
+  role                String    @default("user")
+  position            String?
+  active              Boolean   @default(true)
+  permissions         Json      @default("[]")
+  createdAt           DateTime  @default(now())
+  twoFactorCode       String?   @db.VarChar(255)
   twoFactorCodeExpiry DateTime?
 
-  localId  String?
-  local    Local? @relation(fields: [localId], references: [id])
+  localId String?
+  local   Local?  @relation(fields: [localId], references: [id])
 
-  ownerId  String
-  owner    Owner @relation(fields: [ownerId], references: [id])
+  ownerId String
+  owner   Owner  @relation(fields: [ownerId], references: [id])
 
-  vehiculos   Vehiculos[]
-  tareasAsignadas Tarea[] @relation("UserTareas")
+  vehiculos       Vehiculos[]
+  tareasAsignadas Tarea[]     @relation("UserTareas")
 }
 
 model Owner {
-  id      String  @id @default(uuid())
-  name    String
-  email   String  @unique
-  phone   String?
-  password    String   @db.VarChar(255)
-  role        String   @default("owner")
-  permissions Json     @default("[]")
-  twoFactorCode  String? @db.VarChar(255)
+  id                  String    @id @default(uuid())
+  name                String
+  email               String    @unique
+  phone               String?
+  password            String    @db.VarChar(255)
+  role                String    @default("owner")
+  permissions         Json      @default("[]")
+  twoFactorCode       String?   @db.VarChar(255)
   twoFactorCodeExpiry DateTime?
 
-  users  User[]
-  locales Local[]
-  anuncios Anuncio[]
+  users         User[]
+  locales       Local[]
+  anuncios      Anuncio[]
+  notifications Notifications[]
 }
 
 model Proveedores {
-  id      String  @id @default(uuid())
-  name    String
-  email   String?
-  phone   String?
-  
-  local   Local   @relation(fields: [localId], references: [id])
+  id    String  @id @default(uuid())
+  name  String
+  email String?
+  phone String?
+
+  local   Local  @relation(fields: [localId], references: [id])
   localId String
 
   inventario Inventario[]
@@ -96,11 +97,11 @@ model Inventario {
   stock         Int
   maxStock      Int     @default(100)
   estado        Boolean @default(true)
-  
+
   proveedor   Proveedores @relation(fields: [proveedorId], references: [id])
   proveedorId String
-  
-  local   Local   @relation(fields: [localId], references: [id])
+
+  local   Local  @relation(fields: [localId], references: [id])
   localId String
 }
 
@@ -111,59 +112,59 @@ model Clientes {
   phone     String?
   direccion String?
 
-  local   Local   @relation(fields: [localId], references: [id])
+  local   Local  @relation(fields: [localId], references: [id])
   localId String
 
   ventas Ventas[]
 }
 
 model Ventas {
-  id           String   @id @default(uuid())
-  total        Float
-  items        Json     @default("[]")
-  fecha        DateTime @default(now())
-  
+  id    String   @id @default(uuid())
+  total Float
+  items Json     @default("[]")
+  fecha DateTime @default(now())
+
   cliente   Clientes? @relation(fields: [clienteId], references: [id])
   clienteId String?
 
-  local   Local   @relation(fields: [localId], references: [id])
+  local   Local  @relation(fields: [localId], references: [id])
   localId String
 }
 
 model Vehiculos {
-  id                    String    @id @default(uuid())
-  carName               String?
-  marca                 String
-  modelo                String
-  year                  Int
-  tipo                  String    // camion, sedan, camioneta, van
-  ultimoMantenimientoFecha   DateTime?
-  ultimoMantenimientoKm      Int?
-  proximoMantenimientoFecha  DateTime?
+  id                        String    @id @default(uuid())
+  carName                   String?
+  marca                     String
+  modelo                    String
+  year                      Int
+  tipo                      String // camion, sedan, camioneta, van
+  ultimoMantenimientoFecha  DateTime?
+  ultimoMantenimientoKm     Int?
+  proximoMantenimientoFecha DateTime?
   proximoMantenimientoKm    Int?
-  frecuenciaKm          Int?
-  frecuenciaTiempo      Int?   // "3 meses", "6 meses", etc.
-  estado                Boolean   @default(true)
-  imagen                String?
+  frecuenciaKm              Int?
+  frecuenciaTiempo          Int? // "3 meses", "6 meses", etc.
+  estado                    Boolean   @default(true)
+  imagen                    String?
 
-  encargados  User[]
+  encargados User[]
 
-  local   Local   @relation(fields: [localId], references: [id])
+  local   Local  @relation(fields: [localId], references: [id])
   localId String
 }
 
 model Anuncio {
-  id        String   @id @default(uuid())
-  content   String   @db.Text
-  type      String   @default("info") // info, warning, success
-  isPinned  Boolean  @default(false)
-  fecha     DateTime @default(now())
+  id       String   @id @default(uuid())
+  content  String   @db.Text
+  type     String   @default("info") // info, warning, success
+  isPinned Boolean  @default(false)
+  fecha    DateTime @default(now())
 
-  localId   String
-  local     Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
+  localId String
+  local   Local  @relation(fields: [localId], references: [id], onDelete: Cascade)
 
-  authorId  String
-  author    Owner    @relation(fields: [authorId], references: [id])
+  authorId String
+  author   Owner  @relation(fields: [authorId], references: [id])
 }
 
 model Tarea {
@@ -180,8 +181,24 @@ model Tarea {
   creatorId   String
   creatorType String
 
-  localId     String
-  local       Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
+  localId String
+  local   Local  @relation(fields: [localId], references: [id], onDelete: Cascade)
 
   assignedUsers User[] @relation("UserTareas")
+}
+
+model Notifications {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  users     Json     @default("[]")
+  createdAt DateTime @default(now())
+
+  localId String
+  local   Local  @relation(fields: [localId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   Owner  @relation(fields: [authorId], references: [id])
 }
