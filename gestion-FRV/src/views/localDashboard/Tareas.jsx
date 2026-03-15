@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useLocal } from "../../context/LocalContext";
-import { format, isSameDay } from "date-fns";
-import { es } from "date-fns/locale";
 
 import CalendarBoard from "../../components/dashboard/tareas/CalendarBoard";
 import TaskList from "../../components/dashboard/tareas/TaskList";
 import NuevaTareaModal from "../../components/dashboard/tareas/NuevaTareaModal";
+import EditTareaModal from "../../components/dashboard/tareas/EditTareaModal";
 
 export default function Tareas() {
   const { user } = useAuth();
@@ -14,6 +13,8 @@ export default function Tareas() {
   const [tareas, setTareas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState(null);
 
   const isAdmin = user?.type === "owner" || user?.permissions?.admin;
 
@@ -59,6 +60,58 @@ export default function Tareas() {
       console.error(e);
       alert(e.message);
     }
+  };
+
+  // Handle Edit Task
+  const handleEditTask = async (tareaId, taskData) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/locales/${selectedLocal.id}/tareas/${tareaId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(taskData),
+      });
+
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Error al actualizar tarea");
+      }
+      
+      setEditModalOpen(false);
+      setTaskToEdit(null);
+      fetchTareas();
+    } catch (e) {
+      console.error(e);
+      alert(e.message);
+    }
+  };
+
+  // Handle Delete Task
+  const handleDeleteTask = async (tareaId) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar esta tarea permanentemente?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/locales/${selectedLocal.id}/tareas/${tareaId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Error al eliminar tarea");
+      }
+      
+      // Update local state and remove it from view
+      setTareas((prev) => prev.filter((t) => t.id !== tareaId));
+    } catch (e) {
+      console.error(e);
+      alert(e.message);
+    }
+  };
+
+  const openEditModal = (tarea) => {
+    setTaskToEdit(tarea);
+    setEditModalOpen(true);
   };
 
   // Handle Update Task Status
@@ -110,13 +163,14 @@ export default function Tareas() {
       <div className="flex flex-col gap-6 w-full">
           
         {/* Top: Task List Data Table */}
-        <div className="glass-panel p-5 rounded-3xl w-full flex flex-col">
+        <div className="glass-panel p-5 rounded-3xl w-full flex flex-col relative z-20">
             <h2 className="text-xl font-bold mb-4 drop-shadow-md">Lista de Tareas Pendientes</h2>
-            <div className="overflow-x-auto w-full">
+            <div className="w-full relative">
               <TaskList 
                 tareas={tareas} 
                 isLoading={loading} 
                 onStatusChange={handleUpdateStatus} 
+                onEdit={openEditModal}
                 currentUserId={user?.id}
                 isAdmin={isAdmin}
               />
@@ -135,6 +189,15 @@ export default function Tareas() {
            onClose={() => setModalOpen(false)} 
            onSubmit={handleCreateTask}
            localId={selectedLocal.id} 
+        />
+      )}
+
+      {editModalOpen && taskToEdit && (
+        <EditTareaModal 
+           onClose={() => { setEditModalOpen(false); setTaskToEdit(null); }} 
+           onSubmit={handleEditTask}
+           localId={selectedLocal.id} 
+           initialTask={taskToEdit}
         />
       )}
     </div>

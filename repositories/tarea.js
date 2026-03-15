@@ -45,9 +45,9 @@ class TareaRepository {
         if (
           t.deadline < now &&
           t.status !== "Realizada" &&
-          t.status !== "Fuera de tiempo"
+          t.status !== "No se pudo completar"
         ) {
-          return { ...t, status: "Fuera de tiempo" };
+          return { ...t, status: "No se pudo completar" };
         }
         return t;
       });
@@ -122,6 +122,55 @@ class TareaRepository {
     } catch (error) {
        console.error("Error al actualizar estado de tarea:", error);
        throw error;
+    }
+  }
+
+  /**
+   * Actualiza la información principal de la tarea.
+   */
+  static async updateTarea(tareaId, data) {
+    const { title, description, deadline, isPublic, assignedUserIds } = data;
+    
+    try {
+      const updated = await prisma.tarea.update({
+        where: { id: tareaId },
+        data: {
+          title,
+          description,
+          deadline: new Date(deadline),
+          isPublic: isPublic || false,
+          assignedUsers: {
+            set: assignedUserIds.map((id) => ({ id })), // This replaces the current assignments
+          },
+        },
+        include: {
+          assignedUsers: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+      return updated;
+    } catch (error) {
+      console.error("Error al actualizar tarea:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Elimina una tarea por su ID.
+   */
+  static async deleteTarea(tareaId) {
+    try {
+      await prisma.tarea.delete({
+        where: { id: tareaId },
+      });
+      return true;
+    } catch (error) {
+      console.error("Error al eliminar tarea:", error);
+      throw error;
     }
   }
 

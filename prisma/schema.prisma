@@ -171,7 +171,7 @@ model Tarea {
   id          String   @id @default(uuid())
   title       String
   description String?  @db.Text
-  status      String   @default("Sin realizar") // "Sin realizar", "En proceso", "Realizada", "No se pudo completar", "Fuera de tiempo"
+  status      String   @default("Sin realizar") // "Sin realizar", "En proceso", "Realizada", "No se pudo completar"
   reason      String?  @db.Text // Razón si "No se pudo completar"
   deadline    DateTime
   isPublic    Boolean  @default(false)

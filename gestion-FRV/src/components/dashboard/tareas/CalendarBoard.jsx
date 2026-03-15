@@ -9,7 +9,6 @@ const statusColors = {
   "En proceso": "bg-blue-400",
   "Realizada": "bg-emerald-400",
   "No se pudo completar": "bg-amber-400",
-  "Fuera de tiempo": "bg-red-400",
 };
 
 export default function CalendarBoard({ tareas, isLoading }) {

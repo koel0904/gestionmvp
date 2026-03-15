@@ -234,14 +234,7 @@ router.post(
         ...req.body,
         ownerId: req.user.userId,
       });
-      const safeUser = {
-        id: usuario.id,
-        name: usuario.name,
-        email: usuario.email,
-        role: usuario.role,
-        phone: usuario.phone,
-      };
-      res.json({ message: "Usuario creado con éxito", usuario: safeUser });
+      res.json({ message: "Usuario creado con éxito", usuario });
     } catch (err) {
       if (err.code === "P2002")
         return res.status(400).json({ error: "Email already exists" });

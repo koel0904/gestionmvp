@@ -173,6 +173,18 @@ class localRepository {
         localId,
         ownerId: data.ownerId,
       },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        position: true,
+        active: true,
+        createdAt: true,
+        permissions: true,
+        local: { select: { name: true } },
+      },
     });
   }
 

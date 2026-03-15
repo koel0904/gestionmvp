@@ -105,4 +105,49 @@ router.patch("/locales/:id/tareas/:tareaId/status", authenticateToken, requireAc
   }
 });
 
+// Actualizar información de Tarea (Solo Owner/Admin o creador - para simplicidad aquí, exigimos Admin)
+router.put("/locales/:id/tareas/:tareaId", authenticateToken, requireActiveLocal, async (req, res) => {
+  try {
+    const isAdmin = await checkIsAdmin(req.user);
+    if (!isAdmin) {
+      return res.status(403).json({ error: "No tienes permisos para editar toda la tarea" });
+    }
+
+    const { title, description, deadline, isPublic, assignedUserIds } = req.body;
+    const tareaId = req.params.tareaId;
+
+    if (!title || !deadline || !assignedUserIds || !Array.isArray(assignedUserIds)) {
+        return res.status(400).json({ error: "Datos incompletos para editar la tarea" });
+    }
+
+    const updatedTarea = await TareaRepository.updateTarea(
+      tareaId,
+      { title, description, deadline, isPublic, assignedUserIds }
+    );
+
+    res.status(200).json({ tarea: updatedTarea, message: "Tarea actualizada con éxito" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error interno al editar tarea" });
+  }
+});
+
+// Eliminar Tarea (Solo Owner/Admin)
+router.delete("/locales/:id/tareas/:tareaId", authenticateToken, requireActiveLocal, async (req, res) => {
+  try {
+    const isAdmin = await checkIsAdmin(req.user);
+    if (!isAdmin) {
+      return res.status(403).json({ error: "No tienes permisos para eliminar tareas" });
+    }
+
+    const tareaId = req.params.tareaId;
+    await TareaRepository.deleteTarea(tareaId);
+
+    res.status(200).json({ message: "Tarea eliminada correctamente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error interno al eliminar la tarea" });
+  }
+});
+
 export default router;

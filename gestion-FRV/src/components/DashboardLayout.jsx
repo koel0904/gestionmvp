@@ -77,6 +77,104 @@ export default function DashboardLayout() {
   const currentViewName =
     dynamicLinks.find((l) => l.path === location.pathname)?.name || "Dashboard";
 
+  // --- HTML5 Drag and Drop logic ---
+  const [orderedLinks, setOrderedLinks] = useState([]);
+  const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+  const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
+
+  useEffect(() => {
+    // Load custom order from localStorage, filter any obsolete links, then add new ones
+    const lsKey = `sidebar_order_${user?.id}`;
+    const savedOrderNames = JSON.parse(localStorage.getItem(lsKey) || "[]");
+
+    let initialOrder = [...dynamicLinks];
+
+    if (savedOrderNames.length > 0) {
+      // Reconstruct based on saved order names
+      const reordered = [];
+      savedOrderNames.forEach((name) => {
+        const found = dynamicLinks.find((l) => l.name === name);
+        if (found) reordered.push(found);
+      });
+      // Add any new links that aren't in saved string (perhaps added later)
+      dynamicLinks.forEach((link) => {
+        if (!reordered.find((r) => r.name === link.name)) {
+          reordered.push(link);
+        }
+      });
+      initialOrder = reordered;
+    }
+
+    // Force Settings to the bottom always
+    const settingsLink = initialOrder.find((l) => l.name === "Settings");
+    const others = initialOrder.filter((l) => l.name !== "Settings");
+    if (settingsLink) {
+        setOrderedLinks([...others, settingsLink]);
+    } else {
+        setOrderedLinks(others);
+    }
+  }, [user, dynamicLinks.length]); // Depends on dynamicLinks to re-evaluate on perms load
+
+  const saveOrderToLocalStore = (newOrder) => {
+    const lsKey = `sidebar_order_${user?.id}`;
+    const namesArray = newOrder.map((l) => l.name);
+    localStorage.setItem(lsKey, JSON.stringify(namesArray));
+  };
+
+  const handleDragStart = (e, index, isSettings) => {
+    if (isSettings) {
+      e.preventDefault(); // Cannot drag settings
+      return;
+    }
+    setDraggedItemIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    // Set transparent image to avoid default ghost
+    const img = new Image();
+    img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+    e.dataTransfer.setDragImage(img, 0, 0);
+  };
+
+  const handleDragEnter = (e, index, isSettings) => {
+    e.preventDefault();
+    if (isSettings) return;
+    
+    // Instead of jumping directly, we ensure we only update if it actually changes,
+    // reducing rapid re-renders that cause lag.
+    if (draggedItemIndex !== null && index !== draggedItemIndex) {
+        setDragOverItemIndex(index);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItemIndex(null);
+    setDragOverItemIndex(null);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move"; // Show proper cursor
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    if (draggedItemIndex === null || isNaN(dropIndex) || draggedItemIndex === dropIndex) {
+      handleDragEnd();
+      return;
+    }
+
+    const newOrder = [...orderedLinks];
+    const draggedItem = newOrder[draggedItemIndex];
+    
+    // Remove from old position
+    newOrder.splice(draggedItemIndex, 1);
+    // Insert into new position
+    newOrder.splice(dropIndex, 0, draggedItem);
+
+    setOrderedLinks(newOrder);
+    saveOrderToLocalStore(newOrder);
+    handleDragEnd();
+  };
+
   return (
     <div className="h-screen font-display text-white flex p-4 gap-4 relative overflow-hidden">
       {/* ══════════════════════════════════════ */}
@@ -250,47 +348,69 @@ export default function DashboardLayout() {
 
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto overflow-x-hidden space-y-1.5 p-3 custom-scrollbar">
-            {dynamicLinks.map((link) => {
+            {orderedLinks.map((link, index) => {
               const isActive = location.pathname === link.path;
-              const isAccent = isActive;
+              // Block dragging for Settings
+              const isSettings = link.name === "Settings";
 
               return (
-                <Link
+                <div
                   key={link.path}
-                  to={link.path}
-                  title={!sidebarOpen ? link.name : undefined}
-                  className={`flex items-center p-2 rounded-xl transition-all duration-300 group relative overflow-hidden box-border ${
-                    isActive
-                      ? "bg-white/[0.06] text-white shadow-lg border border-white/10"
-                      : "text-white/60 hover:text-white hover:bg-white/[0.03] border border-transparent"
+                  draggable={!isSettings}
+                  onDragStart={(e) => handleDragStart(e, index, isSettings)}
+                  onDragEnter={(e) => handleDragEnter(e, index, isSettings)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, index)}
+                  className={`relative transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+                    draggedItemIndex === index 
+                      ? "opacity-40 scale-95 z-0" 
+                      : "opacity-100 scale-100 z-10"
                   }`}
                 >
-                  {isActive && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent pointer-events-none" />
+                  {/* Drop indicator lines */}
+                  {dragOverItemIndex === index && draggedItemIndex !== null && (
+                    <div className={`absolute left-0 right-0 h-1 bg-primary-light rounded-full shadow-[0_0_10px_rgba(124,58,237,0.8)] z-20 pointer-events-none transition-all duration-300
+                      ${draggedItemIndex < index ? "bottom-[-4px]" : "top-[-4px]"}
+                    `} />
                   )}
-                  <div
-                    className={`w-10 h-10 flex items-center justify-center shrink-0 relative z-10 transition-transform group-hover:scale-110 ${!sidebarOpen && "mx-auto"}`}
+                  
+                  <Link
+                    to={link.path}
+                    title={!sidebarOpen ? link.name : undefined}
+                    className={`flex items-center p-2 rounded-xl transition-all duration-300 group relative overflow-hidden box-border ${
+                      isActive
+                        ? "bg-white/[0.06] text-white shadow-lg border border-white/10"
+                        : "text-white/60 hover:text-white hover:bg-white/[0.03] border border-transparent"
+                    } ${!isSettings ? "cursor-grab active:cursor-grabbing" : ""}`}
                   >
-                    <span
-                      className={`material-symbols-outlined transition-all duration-300 ${
-                        isActive
-                          ? "text-transparent bg-clip-text bg-gradient-to-br from-primary-light to-primary-dark drop-shadow-[0_0_8px_rgba(124,58,237,0.4)] scale-110"
-                          : "text-[22px] text-white/40 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-br group-hover:from-primary-light group-hover:to-primary-dark group-hover:drop-shadow-[0_0_8px_rgba(124,58,237,0.6)]"
+                    {isActive && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent pointer-events-none" />
+                    )}
+                    <div
+                      className={`w-10 h-10 flex items-center justify-center shrink-0 relative z-10 transition-transform group-hover:scale-110 ${!sidebarOpen && "mx-auto"}`}
+                    >
+                      <span
+                        className={`material-symbols-outlined transition-all duration-300 ${
+                          isActive
+                            ? "text-transparent bg-clip-text bg-gradient-to-br from-primary-light to-primary-dark drop-shadow-[0_0_8px_rgba(124,58,237,0.4)] scale-110"
+                            : "text-[22px] text-white/40 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-br group-hover:from-primary-light group-hover:to-primary-dark group-hover:drop-shadow-[0_0_8px_rgba(124,58,237,0.6)]"
+                        }`}
+                      >
+                        {link.icon}
+                      </span>
+                    </div>
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap flex items-center relative z-10 ${
+                        sidebarOpen
+                          ? "max-w-[160px] opacity-100 ml-2"
+                          : "max-w-0 opacity-0 ml-0"
                       }`}
                     >
-                      {link.icon}
-                    </span>
-                  </div>
-                  <div
-                    className={`overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap flex items-center relative z-10 ${
-                      sidebarOpen
-                        ? "max-w-[160px] opacity-100 ml-2"
-                        : "max-w-0 opacity-0 ml-0"
-                    }`}
-                  >
-                    <span className="text-sm font-semibold">{link.name}</span>
-                  </div>
-                </Link>
+                      <span className="text-sm font-semibold">{link.name}</span>
+                    </div>
+                  </Link>
+                </div>
               );
             })}
           </nav>
