@@ -4,7 +4,7 @@ import register from "./routes/register.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 // solo con importarlo se inicia el servidor de web sockets
-import wss from "./ws.js";
+//import wss from "./ws.js";
 
 import locales from "./routes/locales.js";
 import tareas from "./routes/tareas.js";
