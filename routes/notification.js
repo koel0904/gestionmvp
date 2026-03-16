@@ -87,6 +87,29 @@ router.post("/subscribe", (req, res) => {
     res.status(201).json({ message: "Subscription saved successfully." });
 });
 
+// Route to completely remove all subscriptions for a specific user
+router.post("/unsubscribe", (req, res) => {
+    const { userId } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ error: "userId is required to unsubscribe." });
+    }
+
+    const subscriptions = getSubscriptions();
+
+    // Filter out all subscriptions matching the userId
+    const initialLength = subscriptions.length;
+    const filteredSubscriptions = subscriptions.filter((sub) => sub.userId !== userId);
+
+    if (filteredSubscriptions.length < initialLength) {
+        saveSubscriptions(filteredSubscriptions);
+        console.log(`Unsubscribed user ${userId} and removed their endpoints.`);
+        return res.status(200).json({ message: "Unsubscribed successfully." });
+    } else {
+        return res.status(404).json({ message: "No active subscriptions found for this user." });
+    }
+});
+
 // Route to test sending a notification to all subscribers
 router.post("/sendTestNotification", async (req, res) => {
     const { title, message } = req.body;

@@ -149,5 +149,41 @@ export const useWebPush = (userId) => {
         }
     };
 
-    return { isSupported, isSubscribed, loading, error, subscribe, sendTestNotification };
+    const unsubscribe = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            // 1. Unsubscribe from the browser's Push Manager
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+
+            if (subscription) {
+                await subscription.unsubscribe();
+                console.log("[WebPush] Unsubscribed from browser push manager.");
+            }
+
+            // 2. Instruct backend to delete all subscription records for this user
+            const response = await fetch(`${apiBase}/notification/unsubscribe`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ userId }),
+            });
+
+            if (!response.ok) {
+                console.warn("[WebPush] Backend returned error during unsubscribe, ignoring.");
+            } else {
+                console.log("[WebPush] Backend records deleted successfully.");
+            }
+
+            setIsSubscribed(false);
+        } catch (err) {
+            console.error("[WebPush] Failed to unsubscribe:", err);
+            setError("Error al cancelar la suscripción.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return { isSupported, isSubscribed, loading, error, subscribe, unsubscribe, sendTestNotification };
 };

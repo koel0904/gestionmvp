@@ -5,7 +5,7 @@ export default function Notification({ userId }) {
     // so you don't have to pass it manually from parent components.
     const activeUserId = userId || "default-user-id";
 
-    const { isSupported, isSubscribed, loading, error, subscribe, sendTestNotification } = useWebPush(activeUserId);
+    const { isSupported, isSubscribed, loading, error, subscribe, unsubscribe, sendTestNotification } = useWebPush(activeUserId);
 
     if (!isSupported) {
         return (
@@ -39,21 +39,39 @@ export default function Notification({ userId }) {
                         </p>
                     </div>
 
-                    <button
-                        onClick={sendTestNotification}
-                        disabled={loading}
-                        className={`w-full py-2.5 rounded-lg font-semibold transition flex justify-center items-center gap-2 ${loading
-                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                            : 'bg-gray-100 hover:bg-gray-200 text-gray-800 active:scale-[0.98]'
-                            }`}
-                    >
-                        {loading ? 'Enviando...' : 'Enviar Prueba'}
-                        {!loading && (
-                            <span className="material-symbols-outlined text-[18px]">
-                                send
-                            </span>
-                        )}
-                    </button>
+                    <div className="flex gap-2 w-full">
+                        <button
+                            onClick={sendTestNotification}
+                            disabled={loading}
+                            className={`flex-1 py-2.5 rounded-lg font-semibold transition flex justify-center items-center gap-2 ${loading
+                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                : 'bg-gray-100 hover:bg-gray-200 text-gray-800 active:scale-[0.98]'
+                                }`}
+                        >
+                            {loading ? 'Enviando...' : 'Probar'}
+                            {!loading && (
+                                <span className="material-symbols-outlined text-[18px]">
+                                    send
+                                </span>
+                            )}
+                        </button>
+
+                        <button
+                            onClick={unsubscribe}
+                            disabled={loading}
+                            className={`flex-1 py-2.5 rounded-lg font-semibold transition flex justify-center items-center gap-2 ${loading
+                                ? 'bg-red-200 text-red-500 cursor-not-allowed'
+                                : 'bg-red-100 hover:bg-red-200 text-red-700 active:scale-[0.98]'
+                                }`}
+                        >
+                            Desactivar
+                            {!loading && (
+                                <span className="material-symbols-outlined text-[18px]">
+                                    notifications_off
+                                </span>
+                            )}
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <div>
