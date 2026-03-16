@@ -35,7 +35,10 @@ const __dirname = path.dirname(__filename);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+import notification from "./routes/notification.js";
+
 app.use("/api", login, register, locales, tareas);
+app.use("/api/notification", notification);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

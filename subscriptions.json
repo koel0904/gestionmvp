@@ -1,0 +1,17 @@
+[
+  {
+    "endpoint": "https://fcm.googleapis.com/fcm/send/test-endpoint",
+    "keys": {
+      "p256dh": "test-p256dh",
+      "auth": "test-auth"
+    }
+  },
+  {
+    "endpoint": "https://web.push.apple.com/QJ3diXCGzzIvhX0O3uSMKIikD6Cx8ph-24ah2dyaSOlPMibzGeSuEqr4X_3IqJeElnZShfuY1uUoZV1QLEq5tdqkoGNlLK-lIhGEwpn8RvTYIfM-rzN9Ct2jqeOM6DbQ8DXXU8N4r62PG_il-XKPze3Xt_2Q5MltXHAeDOHpDDw",
+    "keys": {
+      "p256dh": "BHg1JPd_zy41EIOwDJqHlqqIroD25lyzJ0IlwNu4967UbVVMl_4BSrDCdZzzcZi7k3GrI1SLjCkhwhyI-hKQNgk",
+      "auth": "4a8q2p5j3ZLGonaS8MfpEQ"
+    },
+    "userId": "default-user-id"
+  }
+]

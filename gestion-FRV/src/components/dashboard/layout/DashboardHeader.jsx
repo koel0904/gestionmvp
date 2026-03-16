@@ -1,4 +1,5 @@
-import React from 'react';
+import { useState } from 'react';
+import Notification from '../../modules/notification.jsx';
 
 export default function DashboardHeader({
     sidebarOpen,
@@ -9,6 +10,8 @@ export default function DashboardHeader({
     currentViewName,
     handleLogout
 }) {
+    const [showNotifications, setShowNotifications] = useState(false);
+
     return (
         <header className="z-30 shrink-0">
             <div className="flex items-center justify-between glass-heavy rounded-2xl px-5 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
@@ -51,11 +54,25 @@ export default function DashboardHeader({
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button className="size-9 rounded-xl glass-button flex items-center justify-center text-white/60 hover:text-white cursor-pointer hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]">
-                        <span className="material-symbols-outlined text-[20px]">
-                            notifications
-                        </span>
-                    </button>
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowNotifications(!showNotifications)}
+                            className={`size-9 rounded-xl glass-button flex items-center justify-center cursor-pointer transition-all ${showNotifications
+                                ? 'text-white shadow-[0_0_15px_rgba(255,255,255,0.3)] bg-white/10'
+                                : 'text-white/60 hover:text-white hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]'
+                                }`}
+                        >
+                            <span className="material-symbols-outlined text-[20px]">
+                                notifications
+                            </span>
+                        </button>
+
+                        {showNotifications && (
+                            <div className="absolute right-0 top-full mt-3 z-[100] animate-in fade-in slide-in-from-top-2 origin-top-right">
+                                <Notification />
+                            </div>
+                        )}
+                    </div>
                     <button className="size-9 rounded-xl glass-button flex items-center justify-center text-white/60 hover:text-white cursor-pointer hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]">
                         <span className="material-symbols-outlined text-[20px]">
                             search
