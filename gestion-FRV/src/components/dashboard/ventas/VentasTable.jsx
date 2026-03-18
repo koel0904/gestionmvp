@@ -169,8 +169,8 @@ export default function VentasTable({
                         {v.cliente.name}
                       </div>
                     ) : (
-                      <span className="text-sm text-white/30 italic">
-                        Cliente directo
+                      <span className="text-sm text-white/70 font-medium">
+                        Usuario Común
                       </span>
                     )}
                   </td>

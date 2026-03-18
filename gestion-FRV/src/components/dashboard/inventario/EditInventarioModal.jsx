@@ -162,19 +162,18 @@ export default function EditInventarioModal({
                     {/* Proveedor */}
                     <div>
                         <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
-                            Proveedor *
+                            Proveedor (Opcional)
                         </label>
                         <div className="relative">
                             <select
-                                required
                                 value={editForm.proveedorId}
                                 onChange={(e) =>
                                     setEditForm({ ...editForm, proveedorId: e.target.value })
                                 }
                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-400/50 focus:bg-white/10 transition-all appearance-none cursor-pointer"
                             >
-                                <option value="" disabled className="bg-slate-900">
-                                    Seleccionar proveedor
+                                <option value="" className="bg-slate-900">
+                                    Sin proveedor específico
                                 </option>
                                 {proveedores.map((p) => (
                                     <option key={p.id} value={p.id} className="bg-slate-900">

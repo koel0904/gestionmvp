@@ -11,6 +11,7 @@ import {
   getClientes,
   createCliente,
   deleteCliente,
+  getSalesCount,
 } from "../../services/api/dashboardClients";
 
 import ClientesHeader from "../../components/dashboard/clientes/ClientesHeader";
@@ -42,6 +43,7 @@ export default function Clientes() {
   });
 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [salesCount, setSalesCount] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [editingCliente, setEditingCliente] = useState(null);
@@ -174,9 +176,18 @@ export default function Clientes() {
         onEdit={(c) =>
           checkAccess("edit", () => setEditingCliente(c), showToast)
         }
-        onDelete={(id) =>
-          checkAccess("delete", () => setDeleteConfirm(id), showToast)
-        }
+        onDelete={async (id) => {
+          checkAccess("delete", async () => {
+            try {
+              const count = await getSalesCount(selectedLocal.id, id);
+              setSalesCount(count);
+              setDeleteConfirm(id);
+            } catch (err) {
+              console.error(err);
+              setDeleteConfirm(id); // Proceder de todos modos si falla el conteo
+            }
+          }, showToast);
+        }}
       />
 
       <NewClienteModal
@@ -220,9 +231,18 @@ export default function Clientes() {
 
       <ConfirmDeleteModal
         isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        onClose={() => {
+          setDeleteConfirm(null);
+          setSalesCount(0);
+        }}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
+        title="¿Eliminar cliente?"
+        message={
+          salesCount > 0 
+            ? `Este cliente tiene ${salesCount} venta(s) asociada(s). Si lo eliminas, las ventas no se borrarán, pero aparecerán como realizadas por "Usuario Común". ¿Deseas continuar?`
+            : "¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer."
+        }
       />
     </div>
   );

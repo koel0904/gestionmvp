@@ -49,7 +49,11 @@ export default function DashboardLayout() {
       links = links.filter((link) => {
         const viewName = link.name.toLowerCase();
         // Always show Overview, Settings, Analitics, Foro and Tareas (everyone can read)
-        if (["overview", "settings", "analitics", "foro", "tareas"].includes(viewName))
+        if (
+          ["overview", "settings", "analitics", "foro", "tareas"].includes(
+            viewName,
+          )
+        )
           return true;
 
         // Block Vehículos -> vehiculos translation
@@ -75,8 +79,9 @@ export default function DashboardLayout() {
       {/* SIDEBAR                              */}
       {/* ══════════════════════════════════════ */}
       <aside
-        className={`relative z-40 flex flex-col shrink-0 transition-all duration-300 ease-in-out h-full ${sidebarOpen ? "w-[260px]" : "w-[80px]"
-          }`}
+        className={`relative z-40 flex flex-col shrink-0 transition-all duration-300 ease-in-out h-full ${
+          sidebarOpen ? "w-[260px]" : "w-[80px]"
+        }`}
       >
         <div className="flex flex-col h-full rounded-2xl overflow-hidden glass-heavy shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative">
           <SidebarLogo sidebarOpen={sidebarOpen} />
@@ -94,10 +99,7 @@ export default function DashboardLayout() {
             location={location}
           />
 
-          <SidebarUser
-            sidebarOpen={sidebarOpen}
-            user={user}
-          />
+          <SidebarUser sidebarOpen={sidebarOpen} user={user} />
         </div>
       </aside>
 

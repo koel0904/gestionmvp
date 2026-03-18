@@ -55,7 +55,7 @@ export default function NewVentaModal({
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-orange/50 focus:bg-white/10 transition-all appearance-none cursor-pointer"
             >
               <option value="" className="bg-slate-900">
-                Cliente directo
+                Usuario Común (Cliente Fiel)
               </option>
               {clientes.map((c) => (
                 <option key={c.id} value={c.id} className="bg-slate-900">

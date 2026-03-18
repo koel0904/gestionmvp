@@ -51,6 +51,12 @@ class localRepository {
     };
   }
 
+  static async countVentasByCliente(clienteId) {
+    return prisma.ventas.count({
+      where: { clienteId },
+    });
+  }
+
   // Method to get Proveedores for a local
   static async getProveedores(localId) {
     return prisma.proveedores.findMany({
@@ -222,7 +228,7 @@ class localRepository {
     return prisma.inventario.create({
       data: {
         ...data,
-        proveedorId: data.proveedorId,
+        proveedorId: data.proveedorId || null,
         precio_compra: parseFloat(data.precio_compra),
         precio_venta: parseFloat(data.precio_venta),
         stock: parseInt(data.stock, 10),
@@ -240,7 +246,8 @@ class localRepository {
     };
     if (data.maxStock !== undefined)
       updateData.maxStock = parseInt(data.maxStock, 10);
-    if (data.proveedorId) updateData.proveedorId = data.proveedorId;
+    if (data.proveedorId !== undefined) 
+      updateData.proveedorId = data.proveedorId || null;
     if (data.estado !== undefined) updateData.estado = data.estado;
 
     return prisma.inventario.update({
@@ -367,8 +374,9 @@ class localRepository {
   }
 
   static async deleteCliente(id) {
-    await prisma.ventas.deleteMany({
+    await prisma.ventas.updateMany({
       where: { clienteId: id },
+      data: { clienteId: null },
     });
     return prisma.clientes.delete({
       where: { id },
@@ -493,6 +501,7 @@ class localRepository {
         content: data.content,
         type: data.type || "info",
         isPinned: data.isPinned || false,
+        imageUrl: data.imageUrl || null,
         localId,
         authorId,
       },

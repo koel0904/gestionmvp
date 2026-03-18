@@ -98,8 +98,8 @@ model Inventario {
   maxStock      Int     @default(100)
   estado        Boolean @default(true)
 
-  proveedor   Proveedores @relation(fields: [proveedorId], references: [id])
-  proveedorId String
+  proveedor   Proveedores? @relation(fields: [proveedorId], references: [id])
+  proveedorId String?
 
   local   Local  @relation(fields: [localId], references: [id])
   localId String
@@ -158,6 +158,7 @@ model Anuncio {
   content  String   @db.Text
   type     String   @default("info") // info, warning, success
   isPinned Boolean  @default(false)
+  imageUrl String?
   fecha    DateTime @default(now())
 
   localId String

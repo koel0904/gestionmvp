@@ -46,3 +46,10 @@ export const deleteCliente = async (localId, clienteId) => {
     }
     return await res.json();
 };
+
+export const getSalesCount = async (localId, clienteId) => {
+    const res = await fetch(`${BASE_URL}/${localId}/clientes/${clienteId}/ventas/count`, { credentials: "include" });
+    if (!res.ok) throw new Error("Error fetching sales count");
+    const data = await res.json();
+    return data.count;
+};

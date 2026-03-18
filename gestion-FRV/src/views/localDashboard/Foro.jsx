@@ -15,7 +15,9 @@ export default function Foro() {
   // Form state
   const [newContent, setNewContent] = useState("");
   const [newType, setNewType] = useState("info");
+  const [imageUrl, setImageUrl] = useState("");
   const [isPosting, setIsPosting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Check permissions
   const isOwner = user?.role === "owner" || user?.type === "owner";
@@ -42,6 +44,45 @@ export default function Foro() {
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Optional: basic size check (e.g., 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("La imagen es demasiado grande. Máximo 5MB.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("imagen", file);
+
+    setIsUploading(true);
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/locales/${selectedLocal.id}/anuncios/upload`,
+        {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        },
+      );
+
+      if (!res.ok) throw new Error("Error al subir imagen");
+      const data = await res.json();
+      setImageUrl(data.imageUrl);
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Error al subir la imagen");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageUrl("");
+  };
+
   const handlePost = async (e) => {
     e.preventDefault();
     if (!newContent.trim() || isPosting) return;
@@ -57,13 +98,16 @@ export default function Foro() {
           body: JSON.stringify({
             content: newContent,
             type: newType,
+            imageUrl: imageUrl || null,
             isPinned: false,
           }),
         },
       );
       if (!res.ok) throw new Error("Failed to post");
+      setIsPosting(false);
       setNewContent("");
       setNewType("info");
+      setImageUrl("");
       fetchAnuncios();
     } catch (err) {
       console.error("Error posting anuncio:", err);
@@ -177,50 +221,87 @@ export default function Foro() {
               required
             />
 
+            {imageUrl && (
+              <div className="relative w-full max-w-sm rounded-xl overflow-hidden border border-white/10 bg-white/5 p-2">
+                <img 
+                  src={`http://localhost:3000${imageUrl}`} 
+                  alt="Preview" 
+                  className="w-full h-auto rounded-lg object-cover max-h-48"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="absolute top-4 right-4 size-8 bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-colors shadow-lg"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center justify-between gap-4 mt-2">
-              <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setNewType("info")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
-                    newType === "info"
-                      ? "bg-sky-500/20 text-sky-400 border border-sky-500/30"
-                      : "text-white/50 hover:bg-white/5 hover:text-white border border-transparent"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[16px]">
-                    info
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setNewType("info")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                      newType === "info"
+                        ? "bg-sky-500/20 text-sky-400 border border-sky-500/30"
+                        : "text-white/50 hover:bg-white/5 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      info
+                    </span>
+                    Información
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewType("warning")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                      newType === "warning"
+                        ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                        : "text-white/50 hover:bg-white/5 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      warning
+                    </span>
+                    Aviso
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewType("success")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                      newType === "success"
+                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                        : "text-white/50 hover:bg-white/5 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      check_circle
+                    </span>
+                    Éxito
+                  </button>
+                </div>
+
+                <div className="h-6 w-px bg-white/10 mx-1" />
+
+                <label className={`flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 bg-white/5 cursor-pointer hover:bg-white/10 transition-all text-sm font-medium ${isUploading ? 'opacity-50 cursor-wait' : ''}`}>
+                  <span className="material-symbols-outlined text-[20px] text-purple-400">
+                    {isUploading ? 'refresh' : 'image'}
                   </span>
-                  Información
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setNewType("warning")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
-                    newType === "warning"
-                      ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                      : "text-white/50 hover:bg-white/5 hover:text-white border border-transparent"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[16px]">
-                    warning
+                  <span className="text-white/70">
+                    {isUploading ? 'Subiendo...' : 'Imagen'}
                   </span>
-                  Aviso
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setNewType("success")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
-                    newType === "success"
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                      : "text-white/50 hover:bg-white/5 hover:text-white border border-transparent"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[16px]">
-                    check_circle
-                  </span>
-                  Éxito
-                </button>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleImageUpload}
+                    disabled={isUploading}
+                  />
+                </label>
               </div>
 
               <button
@@ -350,6 +431,17 @@ export default function Foro() {
                     <div className="text-white/80 whitespace-pre-wrap leading-relaxed text-[15px]">
                       {anuncio.content}
                     </div>
+
+                    {anuncio.imageUrl && (
+                      <div className="mt-2 rounded-xl overflow-hidden border border-white/10 bg-black/20 w-full max-w-2xl">
+                        <img 
+                          src={`http://localhost:3000${anuncio.imageUrl}`} 
+                          alt="Contenido del anuncio" 
+                          className="w-full h-auto object-contain max-h-[500px]"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
 
                     {/* Mobile Owner Actions (bottom) */}
                     {isOwner && (

@@ -87,19 +87,18 @@ export default function NewInventarioModal({
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-1.5 ml-1">
-                            Supplier *
+                            Supplier (Optional)
                         </label>
                         <div className="relative">
                             <select
-                                required
                                 value={formData.proveedorId}
                                 onChange={(e) =>
                                     setFormData({ ...formData, proveedorId: e.target.value })
                                 }
                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400/50 focus:bg-white/10 transition-all appearance-none cursor-pointer"
                             >
-                                <option value="" disabled className="bg-slate-900">
-                                    Select Supplier
+                                <option value="" className="bg-slate-900">
+                                    No specific supplier
                                 </option>
                                 {proveedores.map((p) => (
                                     <option key={p.id} value={p.id} className="bg-slate-900">

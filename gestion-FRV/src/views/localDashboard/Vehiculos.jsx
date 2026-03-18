@@ -17,6 +17,7 @@ import VehiculosHeader from "../../components/dashboard/vehiculos/VehiculosHeade
 import VehiculosTable from "../../components/dashboard/vehiculos/VehiculosTable";
 import NewVehiculoModal from "../../components/dashboard/vehiculos/NewVehiculoModal";
 import EditVehiculoModal from "../../components/dashboard/vehiculos/EditVehiculoModal";
+import NuevaTareaModal from "../../components/dashboard/tareas/NuevaTareaModal";
 
 export default function Vehiculos() {
   const { selectedLocal } = useLocal();
@@ -79,6 +80,14 @@ export default function Vehiculos() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Maintenance Task Modal State
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [taskInitialData, setTaskInitialData] = useState({
+    title: "",
+    description: "",
+    date: null
+  });
+
   const showToast = (message, type = "success") => {
     setToast({ visible: true, message, type });
   };
@@ -105,6 +114,43 @@ export default function Vehiculos() {
       imagen: v.imagen || "",
       encargadoIds: v.encargados?.map((e) => e.id) || [],
     });
+  };
+
+  const handleOpenTaskModal = (v) => {
+    const title = `Mantenimiento de vehículo (${v.marca} ${v.modelo})`;
+    const dateStr = v.proximoMantenimientoFecha ? v.proximoMantenimientoFecha.split("T")[0] : "—";
+    const kmStr = v.proximoMantenimientoKm ? `${v.proximoMantenimientoKm.toLocaleString()} kms` : "—";
+    
+    const description = `Sacar cita de mantenimiento para el vehículo ${v.marca} ${v.modelo}${v.carName ? ` (Código: ${v.carName})` : ""}, en la fecha ${dateStr} para el mantenimiento de los ${kmStr}.`;
+    
+    setTaskInitialData({
+      title,
+      description,
+      date: v.proximoMantenimientoFecha ? new Date(v.proximoMantenimientoFecha) : null
+    });
+    setIsTaskModalOpen(true);
+  };
+
+  const handleTaskSubmit = async (taskData) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/locales/${selectedLocal.id}/tareas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(taskData),
+      });
+
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Error al crear tarea");
+      }
+      
+      setIsTaskModalOpen(false);
+      showToast("Tarea de mantenimiento programada exitosamente");
+    } catch (e) {
+      console.error(e);
+      showToast(e.message, "error");
+    }
   };
 
   const handleEditSubmit = async (e) => {
@@ -302,6 +348,7 @@ export default function Vehiculos() {
         onDelete={(id) =>
           checkAccess("delete", () => setDeleteConfirm(id), showToast)
         }
+        onAddMaintenance={(v) => checkAccess("add", () => handleOpenTaskModal(v), showToast)}
       />
 
       <NewVehiculoModal
@@ -347,6 +394,17 @@ export default function Vehiculos() {
         type={toast.type}
         onClose={() => setToast({ ...toast, visible: false })}
       />
+
+      {isTaskModalOpen && (
+        <NuevaTareaModal
+          onClose={() => setIsTaskModalOpen(false)}
+          onSubmit={handleTaskSubmit}
+          localId={selectedLocal.id}
+          initialDate={taskInitialData.date}
+          initialTitle={taskInitialData.title}
+          initialDescription={taskInitialData.description}
+        />
+      )}
     </div>
   );
 }

@@ -34,6 +34,27 @@ const uploadVehiculo = multer({
   },
 });
 
+// Multer config for forum images
+const foroStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "../uploads/foro"));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `foro-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
+  },
+});
+const uploadForo = multer({
+  storage: foroStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|webp|gif/;
+    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
+    const mime = allowed.test(file.mimetype);
+    cb(null, ext && mime);
+  },
+});
+
 const router = express.Router();
 
 // GET /api/locales - Returns locales linked to the authenticated user
@@ -413,7 +434,25 @@ router.put(
       );
       res.json({ message: "Cliente actualizado con éxito", cliente });
     } catch (err) {
-      res.status(500).json({ error: "Error updating cliente" });
+      res.status(500).json({ error: "No se pudieron obtener clientes" });
+    }
+  },
+);
+
+// Check sales count for a client
+router.get(
+  "/locales/:id/clientes/:clienteId/ventas/count",
+  authenticateToken,
+  requireActiveLocal,
+  async (req, res) => {
+    try {
+      const count = await localRepository.countVentasByCliente(
+        req.params.clienteId,
+      );
+      res.json({ count });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "No se pudo contar ventas" });
     }
   },
 );
@@ -641,7 +680,10 @@ router.post(
       const newAnuncio = await localRepository.createAnuncio(
         req.params.id,
         req.user.userId,
-        req.body,
+        {
+          ...req.body,
+          imageUrl: req.body.imageUrl || null,
+        },
       );
       res.json(newAnuncio);
     } catch (err) {
@@ -686,6 +728,21 @@ router.patch(
       console.error(err);
       res.status(500).json({ error: "Error pin anuncio" });
     }
+  },
+);
+
+// Upload forum image
+router.post(
+  "/locales/:id/anuncios/upload",
+  authenticateToken,
+  requireActiveLocal,
+  uploadForo.single("imagen"),
+  (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No se subió ninguna imagen" });
+    }
+    const imageUrl = `/uploads/foro/${req.file.filename}`;
+    res.json({ imageUrl });
   },
 );
 

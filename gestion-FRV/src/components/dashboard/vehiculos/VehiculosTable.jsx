@@ -7,6 +7,7 @@ export default function VehiculosTable({
   setSearchTerm,
   onEdit,
   onDelete,
+  onAddMaintenance,
 }) {
   const formatDate = (d) => {
     if (!d) return "—";
@@ -222,6 +223,15 @@ export default function VehiculosTable({
                   {/* Acciones */}
                   <td className="py-4 px-4 text-right align-middle">
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => onAddMaintenance(v)}
+                        className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-purple-500/20 hover:border-purple-400 border border-transparent hover:shadow-[0_0_20px_rgba(168,85,247,0.5),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
+                        title="Programar Mantenimiento"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">
+                          build
+                        </span>
+                      </button>
                       <button
                         onClick={() => onEdit(v)}
                         className="size-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white cursor-pointer hover:bg-sky-500/20 hover:border-sky-400 border border-transparent hover:shadow-[0_0_20px_rgba(56,189,248,0.5),inset_0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
-export default function NuevaTareaModal({ onClose, onSubmit, localId, initialDate }) {
+export default function NuevaTareaModal({ onClose, onSubmit, localId, initialDate, initialTitle = "", initialDescription = "" }) {
   const getDefaultDate = () => {
     if (initialDate) {
       const d = new Date(initialDate);
@@ -13,8 +13,8 @@ export default function NuevaTareaModal({ onClose, onSubmit, localId, initialDat
   };
 
   const [form, setForm] = useState({
-    title: "",
-    description: "",
+    title: initialTitle,
+    description: initialDescription,
     deadline: getDefaultDate(),
     isPublic: false,
     assignedUserIds: [], // List of user IDs
@@ -197,4 +197,6 @@ NuevaTareaModal.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   localId: PropTypes.string.isRequired,
   initialDate: PropTypes.instanceOf(Date),
+  initialTitle: PropTypes.string,
+  initialDescription: PropTypes.string,
 };
