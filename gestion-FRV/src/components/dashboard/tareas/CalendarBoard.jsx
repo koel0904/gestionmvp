@@ -11,7 +11,7 @@ const statusColors = {
   "No se pudo completar": "bg-amber-400",
 };
 
-export default function CalendarBoard({ tareas, isLoading }) {
+export default function CalendarBoard({ tareas, isLoading, onDayClick }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDayTasks, setSelectedDayTasks] = useState(null); // { date: Date, tasks: [] }
 
@@ -79,15 +79,20 @@ export default function CalendarBoard({ tareas, isLoading }) {
           return (
             <div 
               key={day.toISOString()}
-              onClick={() => hasTasks && setSelectedDayTasks({ date: day, tasks: dayTasks })}
+              onClick={() => {
+                if (hasTasks) {
+                  setSelectedDayTasks({ date: day, tasks: dayTasks });
+                } else if (onDayClick) {
+                  onDayClick(day);
+                }
+              }}
               className={`
                 relative flex flex-col items-center justify-center w-full aspect-square
-                rounded-2xl transition-all duration-300
+                rounded-2xl transition-all duration-300 cursor-pointer
                 ${isCurrentDay 
                   ? "bg-gradient-to-br from-indigo-500/40 to-purple-500/20 shadow-[0_0_30px_rgba(99,102,241,0.3)]" 
                   : "bg-white/5 hover:bg-white/10 hover:scale-105 hover:z-10"
                 }
-                ${hasTasks ? "cursor-pointer" : ""}
               `}
               style={{
                 boxShadow: isCurrentDay ? "" : "inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 6px rgba(0,0,0,0.2)"
@@ -127,9 +132,23 @@ export default function CalendarBoard({ tareas, isLoading }) {
                   <h3 className="text-xl font-bold text-white">Tareas del Día</h3>
                   <p className="text-xs text-white/50">{format(selectedDayTasks.date, "PPP", { locale: es })}</p>
                </div>
-               <button onClick={() => setSelectedDayTasks(null)} className="text-white/40 hover:text-white">
-                 <span className="material-symbols-outlined">close</span>
-               </button>
+               <div className="flex items-center gap-2">
+                 {onDayClick && (
+                   <button 
+                     onClick={() => { 
+                       setSelectedDayTasks(null); 
+                       onDayClick(selectedDayTasks.date); 
+                     }} 
+                     className="text-white/40 hover:text-white p-1"
+                     title="Añadir Tarea"
+                   >
+                     <span className="material-symbols-outlined text-[20px]">add</span>
+                   </button>
+                 )}
+                 <button onClick={() => setSelectedDayTasks(null)} className="text-white/40 hover:text-white p-1" title="Cerrar">
+                   <span className="material-symbols-outlined text-[20px]">close</span>
+                 </button>
+               </div>
             </div>
             
             <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
@@ -154,4 +173,5 @@ export default function CalendarBoard({ tareas, isLoading }) {
 CalendarBoard.propTypes = {
   tareas: PropTypes.array.isRequired,
   isLoading: PropTypes.bool.isRequired,
+  onDayClick: PropTypes.func,
 };

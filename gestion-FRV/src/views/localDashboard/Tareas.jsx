@@ -6,6 +6,7 @@ import CalendarBoard from "../../components/dashboard/tareas/CalendarBoard";
 import TaskList from "../../components/dashboard/tareas/TaskList";
 import NuevaTareaModal from "../../components/dashboard/tareas/NuevaTareaModal";
 import EditTareaModal from "../../components/dashboard/tareas/EditTareaModal";
+import EditReasonModal from "../../components/dashboard/tareas/EditReasonModal";
 
 export default function Tareas() {
   const { user } = useAuth();
@@ -13,8 +14,12 @@ export default function Tareas() {
   const [tareas, setTareas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [newTaskDate, setNewTaskDate] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
+  
+  const [reasonModalOpen, setReasonModalOpen] = useState(false);
+  const [taskForReason, setTaskForReason] = useState(null);
 
   const isAdmin = user?.type === "owner" || user?.permissions?.admin;
 
@@ -114,6 +119,27 @@ export default function Tareas() {
     setEditModalOpen(true);
   };
 
+  const openReasonModal = (tarea) => {
+    setTaskForReason(tarea);
+    setReasonModalOpen(true);
+  };
+
+  const handleDayClick = (date) => {
+    setNewTaskDate(date);
+    setModalOpen(true);
+  };
+
+  const handleReasonSubmit = async (reason) => {
+    if (!taskForReason) return;
+    try {
+      await handleUpdateStatus(taskForReason.id, "No se pudo completar", reason);
+      setReasonModalOpen(false);
+      setTaskForReason(null);
+    } catch (e) {
+      console.error("Error updating reason:", e);
+    }
+  };
+
   // Handle Update Task Status
   const handleUpdateStatus = async (tareaId, newStatus, reason = null) => {
     try {
@@ -151,7 +177,10 @@ export default function Tareas() {
         </div>
         {isAdmin && (
            <button
-            onClick={() => setModalOpen(true)}
+            onClick={() => {
+              setNewTaskDate(null);
+              setModalOpen(true);
+            }}
             className="flex items-center gap-2 px-6 py-3 rounded-xl glass-button text-white text-sm font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] transition-all duration-300 w-full sm:w-auto justify-center"
           >
             <span className="material-symbols-outlined text-[20px]">add</span>
@@ -171,6 +200,7 @@ export default function Tareas() {
                 isLoading={loading} 
                 onStatusChange={handleUpdateStatus} 
                 onEdit={openEditModal}
+                onEditReason={openReasonModal}
                 currentUserId={user?.id}
                 isAdmin={isAdmin}
               />
@@ -179,16 +209,20 @@ export default function Tareas() {
 
         {/* Bottom: Calendar */}
         <div className="w-full">
-          <CalendarBoard tareas={tareas} isLoading={loading} />
+          <CalendarBoard tareas={tareas} isLoading={loading} onDayClick={handleDayClick} />
         </div>
 
       </div>
 
       {modalOpen && (
         <NuevaTareaModal 
-           onClose={() => setModalOpen(false)} 
+           onClose={() => {
+             setModalOpen(false);
+             setNewTaskDate(null);
+           }} 
            onSubmit={handleCreateTask}
            localId={selectedLocal.id} 
+           initialDate={newTaskDate}
         />
       )}
 
@@ -198,6 +232,14 @@ export default function Tareas() {
            onSubmit={handleEditTask}
            localId={selectedLocal.id} 
            initialTask={taskToEdit}
+        />
+      )}
+
+      {reasonModalOpen && taskForReason && (
+        <EditReasonModal
+          onClose={() => { setReasonModalOpen(false); setTaskForReason(null); }}
+          onSubmit={handleReasonSubmit}
+          initialReason={taskForReason.reason}
         />
       )}
     </div>

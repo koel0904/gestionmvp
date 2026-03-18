@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import PropTypes from "prop-types";
@@ -18,7 +19,11 @@ const getStatusClasses = (status) => {
 };
 
 const STATUS_OPTIONS = [
-  { value: "Sin realizar", label: "Sin Realizar", icon: "radio_button_unchecked" },
+  {
+    value: "Sin realizar",
+    label: "Sin Realizar",
+    icon: "radio_button_unchecked",
+  },
   { value: "En proceso", label: "En Proceso", icon: "sync" },
   { value: "Realizada", label: "Realizada", icon: "check_circle" },
   { value: "No se pudo completar", label: "No completada", icon: "cancel" },
@@ -38,7 +43,8 @@ function StatusSelector({ status, canEdit, onChange }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const currentOption = STATUS_OPTIONS.find((o) => o.value === status) || STATUS_OPTIONS[0];
+  const currentOption =
+    STATUS_OPTIONS.find((o) => o.value === status) || STATUS_OPTIONS[0];
 
   if (!canEdit) {
     return (
@@ -69,9 +75,9 @@ function StatusSelector({ status, canEdit, onChange }) {
       </button>
 
       {isOpen && (
-        <div 
+        <div
           className="absolute top-full mt-1 left-1/2 -translate-x-1/2 w-44 glass-panel border border-white/10 rounded-xl shadow-2xl z-[999] flex flex-col py-1 bg-[#141414]"
-          style={{ position: 'absolute' }}
+          style={{ position: "absolute" }}
         >
           {STATUS_OPTIONS.map((opt) => (
             <button
@@ -111,11 +117,35 @@ export default function TaskList({
   onStatusChange,
   onEdit,
   onDelete,
+  onEditReason,
   currentUserId,
   isAdmin,
 }) {
-  const [editingReason, setEditingReason] = useState(null);
-  const [reasonText, setReasonText] = useState("");
+  const [popoverTarea, setPopoverTarea] = useState(null);
+  const [popoverPos, setPopoverPos] = useState({ top: 0, left: 0 });
+  const popoverTimeout = useRef(null);
+
+  const showPopover = (e, tarea) => {
+    clearTimeout(popoverTimeout.current);
+    const iconRect = e.currentTarget.getBoundingClientRect();
+    const tdElement = e.currentTarget.closest("td");
+    const tdRect = tdElement ? tdElement.getBoundingClientRect() : iconRect;
+    
+    // Check if there is more space below or above
+    const spaceBelow = window.innerHeight - iconRect.bottom;
+    const spaceAbove = iconRect.top;
+    const showBelow = spaceBelow >= 200 || spaceBelow > spaceAbove;
+
+    setPopoverPos({
+      top: showBelow ? iconRect.bottom + 8 : iconRect.top - 8,
+      left: Math.max(160, Math.min(window.innerWidth - 160, tdRect.left + tdRect.width / 2)),
+      isBelow: showBelow
+    });
+    setPopoverTarea(tarea);
+  };
+  const hidePopover = () => {
+    popoverTimeout.current = setTimeout(() => setPopoverTarea(null), 150);
+  };
 
   const sortedTareas = useMemo(() => {
     return [...tareas].sort(
@@ -123,22 +153,12 @@ export default function TaskList({
     );
   }, [tareas]);
 
-  const handleStatusSelect = (tareaId, newStatus) => {
+  const handleStatusSelect = (tarea, newStatus) => {
     if (newStatus === "No se pudo completar") {
-      setEditingReason(tareaId);
-      setReasonText(""); // reset
+      onEditReason(tarea);
     } else {
-      if (editingReason === tareaId) {
-        setEditingReason(null);
-      }
-      onStatusChange(tareaId, newStatus);
+      onStatusChange(tarea.id, newStatus);
     }
-  };
-
-  const submitReason = (tareaId) => {
-    if (!reasonText.trim()) return;
-    onStatusChange(tareaId, "No se pudo completar", reasonText);
-    setEditingReason(null);
   };
 
   if (isLoading) {
@@ -163,6 +183,7 @@ export default function TaskList({
   }
 
   return (
+    <>
     <table className="w-full text-left border-collapse">
       <thead>
         <tr className="border-b border-white/10 text-white/50 text-xs uppercase tracking-wider">
@@ -198,32 +219,27 @@ export default function TaskList({
                   {tarea.title}
                 </h3>
                 {tarea.status === "No se pudo completar" && tarea.reason && (
-                  <p className="text-[10px] text-amber-400 mt-1 line-clamp-1">
-                    Fallo: {tarea.reason}
-                  </p>
-                )}
-                {editingReason === tarea.id && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="Razón..."
-                      value={reasonText}
-                      onChange={(e) => setReasonText(e.target.value)}
-                      className="glass-input rounded-lg px-2 py-1 text-xs text-white placeholder-white/20 outline-none w-full border border-amber-500/30"
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => submitReason(tarea.id)}
-                      className="text-xs text-amber-400 font-bold glass-button rounded-lg px-2 py-1"
+                  <div className="mt-1 flex items-start gap-1 group/reason">
+                    <span 
+                      className="material-symbols-outlined text-[14px] text-amber-500 shrink-0 mt-[2px] cursor-help"
+                      onMouseEnter={(e) => showPopover(e, tarea)}
+                      onMouseLeave={hidePopover}
                     >
-                      OK
-                    </button>
-                    <button
-                      onClick={() => setEditingReason(null)}
-                      className="text-xs text-white/40 hover:text-white"
-                    >
-                      x
-                    </button>
+                      info
+                    </span>
+                    <p className="text-[11px] text-amber-400/90 leading-tight line-clamp-2 flex-1 break-words">
+                      <strong className="text-amber-500 font-bold mr-1">Fallo:</strong>
+                      {tarea.reason}
+                    </p>
+                    {canEdit && (
+                      <button
+                        onClick={() => onEditReason(tarea)}
+                        className="text-amber-400 opacity-0 group-hover/reason:opacity-100 transition-opacity p-0.5 hover:bg-amber-400/20 rounded flex-shrink-0 shrink-0 ml-1"
+                        title="Editar razón"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">edit</span>
+                      </button>
+                    )}
                   </div>
                 )}
               </td>
@@ -266,10 +282,10 @@ export default function TaskList({
 
               <td className="py-3 px-4 text-center">
                 <div className="flex items-center justify-center gap-2">
-                  <StatusSelector 
+                  <StatusSelector
                     status={tarea.status}
                     canEdit={canEdit}
-                    onChange={(newVal) => handleStatusSelect(tarea.id, newVal)}
+                    onChange={(newVal) => handleStatusSelect(tarea, newVal)}
                   />
 
                   {isAdmin && (
@@ -301,6 +317,34 @@ export default function TaskList({
         })}
       </tbody>
     </table>
+
+      {/* ── Fixed-position popover ── */}
+      {popoverTarea && popoverTarea.reason && typeof document !== "undefined" && createPortal(
+        <div
+          className="fixed z-[99999] min-w-[280px] max-w-[360px] animate-in fade-in zoom-in-95 duration-150"
+          style={{
+            top: popoverPos.top,
+            left: popoverPos.left,
+            transform: `translate(-50%, ${popoverPos.isBelow ? "0" : "-100%"})`,
+          }}
+          onMouseEnter={() => clearTimeout(popoverTimeout.current)}
+          onMouseLeave={hidePopover}
+        >
+          <div className="bg-[#1a1a1a] backdrop-blur-xl rounded-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_12px_rgba(245,158,11,0.2)] p-3 flex flex-col max-h-[300px]">
+            <div className="text-[10px] shrink-0 font-bold text-white/40 uppercase tracking-widest mb-1.5 px-1 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[14px] text-amber-500">info</span>
+              Detalles del Fallo
+            </div>
+            <div className="px-3 py-2.5 rounded-lg bg-white/[0.03] border border-white/5 overflow-y-auto custom-scrollbar flex-1">
+              <div className="text-sm text-white/80 whitespace-pre-wrap leading-relaxed break-words">
+                {popoverTarea.reason}
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
 
@@ -310,6 +354,7 @@ TaskList.propTypes = {
   onStatusChange: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onEditReason: PropTypes.func.isRequired,
   currentUserId: PropTypes.string,
   isAdmin: PropTypes.bool,
 };

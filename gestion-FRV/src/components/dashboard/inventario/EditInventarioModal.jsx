@@ -123,22 +123,27 @@ export default function EditInventarioModal({
                     </div>
 
                     {/* Stock bar preview */}
-                    {editForm.stock !== "" &&
-                        editForm.maxStock &&
+                    {/* Stock bar preview */}
+                    {editForm.stock != null && editForm.stock !== "" &&
                         (() => {
-                            const pct = Math.min(
-                                100,
-                                (parseInt(editForm.stock) / parseInt(editForm.maxStock)) * 100,
-                            );
-                            const colors = getStockColor(
-                                parseInt(editForm.stock),
-                                parseInt(editForm.maxStock),
-                            );
+                            const stockVal = parseFloat(editForm.stock) || 0;
+                            const maxVal = parseFloat(editForm.maxStock) > 0 ? parseFloat(editForm.maxStock) : Math.max(stockVal, 1);
+                            const pct = Math.min(100, (stockVal / maxVal) * 100);
+                            const colors = getStockColor(stockVal, maxVal);
+                            
+                            // Map colors for the filled bar since Tailwind might purge `bg-xyz-500` if only `bg-xyz-500/15` is scanned
+                            const getProgressBarColor = (bgClass) => {
+                                if (bgClass.includes('red')) return 'bg-red-500';
+                                if (bgClass.includes('orange')) return 'bg-orange-400';
+                                if (bgClass.includes('yellow')) return 'bg-yellow-400';
+                                return 'bg-emerald-400';
+                            };
+
                             return (
                                 <div className="px-1">
                                     <div className="h-2 rounded-full bg-white/5 overflow-hidden">
                                         <div
-                                            className={`h-full rounded-full transition-all duration-300 ${colors.bg.replace("/15", "")}`}
+                                            className={`h-full rounded-full transition-all duration-300 ${getProgressBarColor(colors.bg)}`}
                                             style={{ width: `${pct}%` }}
                                         />
                                     </div>

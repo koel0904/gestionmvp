@@ -1,11 +1,21 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
-export default function NuevaTareaModal({ onClose, onSubmit, localId }) {
+export default function NuevaTareaModal({ onClose, onSubmit, localId, initialDate }) {
+  const getDefaultDate = () => {
+    if (initialDate) {
+      const d = new Date(initialDate);
+      d.setHours(12, 0, 0, 0); // Default to noon
+      const tzOffset = d.getTimezoneOffset() * 60000;
+      return new Date(d - tzOffset).toISOString().slice(0, 16);
+    }
+    return "";
+  };
+
   const [form, setForm] = useState({
     title: "",
     description: "",
-    deadline: "",
+    deadline: getDefaultDate(),
     isPublic: false,
     assignedUserIds: [], // List of user IDs
   });
@@ -186,4 +196,5 @@ NuevaTareaModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   localId: PropTypes.string.isRequired,
+  initialDate: PropTypes.instanceOf(Date),
 };
