@@ -419,17 +419,19 @@ function LocalDetailView({ local, onBack, user, onLocalUpdated }) {
     {
       title: "Total Revenue",
       value: `$${Number(stats.revenue || 0).toFixed(2)}`,
-      change: "+0%",
+      change: `${stats.revenueChange > 0 ? "+" : ""}${stats.revenueChange || 0}%`,
+      trend: stats.revenueChange > 0 ? "up" : stats.revenueChange < 0 ? "down" : "neutral",
       icon: "payments",
       gradient: "from-primary/30 to-primary/10",
       iconColor: "text-primary-light drop-shadow-sm",
-      glowClass: "glow-orange" /* mapped to opaque green */,
+      glowClass: "glow-orange",
       borderColor: "border-primary/30",
     },
     {
       title: "Orders",
       value: (stats.orders || 0).toString(),
-      change: "+0%",
+      change: `${stats.ordersChange > 0 ? "+" : ""}${stats.ordersChange || 0}%`,
+      trend: stats.ordersChange > 0 ? "up" : stats.ordersChange < 0 ? "down" : "neutral",
       icon: "shopping_bag",
       gradient: "from-white/20 to-white/5",
       iconColor: "text-white drop-shadow-md",
@@ -439,7 +441,8 @@ function LocalDetailView({ local, onBack, user, onLocalUpdated }) {
     {
       title: "Customers",
       value: (stats.customers || 0).toString(),
-      change: "+0%",
+      change: null,
+      trend: "neutral",
       icon: "group",
       gradient: "from-primary/20 to-primary/5",
       iconColor: "text-primary-light drop-shadow-sm",
@@ -449,8 +452,8 @@ function LocalDetailView({ local, onBack, user, onLocalUpdated }) {
     {
       title: "Products",
       value: (stats.products || 0).toString(),
-      change: "+0%",
-
+      change: stats.lowStockCount > 0 ? `${stats.lowStockCount} low stock` : null,
+      trend: stats.lowStockCount > 0 ? "down" : "neutral",
       icon: "inventory_2",
       gradient: "from-blue-400/20 to-blue-300/5",
       iconColor: "text-blue-400 drop-shadow-md",
@@ -524,9 +527,25 @@ function LocalDetailView({ local, onBack, user, onLocalUpdated }) {
                     {card.icon}
                   </span>
                 </div>
-                <span className="glass-badge-orange text-[10px] font-bold text-white px-2 py-0.5 rounded-md border-white/20 bg-white/5">
-                  {card.change}
-                </span>
+                {card.change && (
+                  <span
+                    className={`flex items-center gap-0.5 text-[10px] font-bold px-2 py-0.5 rounded-md border-white/20 bg-white/5 ${
+                      card.trend === "up"
+                        ? "text-emerald-400"
+                        : card.trend === "down"
+                          ? "text-red-400"
+                          : "text-white/50"
+                    }`}
+                  >
+                    {card.trend === "up" && (
+                      <span className="material-symbols-outlined text-[12px]">trending_up</span>
+                    )}
+                    {card.trend === "down" && (
+                      <span className="material-symbols-outlined text-[12px]">trending_down</span>
+                    )}
+                    {card.change}
+                  </span>
+                )}
               </div>
               <p className="text-2xl font-black tracking-tight text-white mb-1">
                 {card.value}
@@ -611,22 +630,45 @@ function LocalDetailView({ local, onBack, user, onLocalUpdated }) {
           <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
           <h3 className="text-xs font-black text-blue-400 uppercase tracking-[0.15em] mb-4 flex items-center gap-2 drop-shadow-md">
             <span className="material-symbols-outlined text-[16px] text-blue-400">
-              history
+              dashboard
             </span>
-            Recent Activity
+            Resumen Rápido
           </h3>
-          <div className="flex flex-col items-center justify-center py-14 text-center">
-            <div className="size-20 rounded-2xl glass-panel border-blue-400/20 flex items-center justify-center mb-5 shadow-[0_0_30px_rgba(96,165,250,0.15)]">
-              <span className="material-symbols-outlined text-4xl text-blue-400/60 drop-shadow-md">
-                history
-              </span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Pending Tasks */}
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div className="size-10 rounded-xl bg-amber-400/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[20px] text-amber-400">task_alt</span>
+              </div>
+              <div>
+                <p className="text-xl font-black text-white">{stats.pendingTasks || 0}</p>
+                <p className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Tareas pendientes</p>
+              </div>
             </div>
-            <p className="text-white/60 text-sm font-bold mb-1">
-              No activity yet for {local.name}
-            </p>
-            <p className="text-white/40 text-xs font-medium max-w-[200px]">
-              Your recent actions and events will appear here
-            </p>
+            {/* Low Stock */}
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div className="size-10 rounded-xl bg-red-400/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[20px] text-red-400">warning</span>
+              </div>
+              <div>
+                <p className="text-xl font-black text-white">{stats.lowStockCount || 0}</p>
+                <p className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Stock bajo</p>
+              </div>
+            </div>
+            {/* This Month Revenue */}
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div className="size-10 rounded-xl bg-emerald-400/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[20px] text-emerald-400">trending_up</span>
+              </div>
+              <div>
+                <p className="text-xl font-black text-white">
+                  {stats.revenueChange !== undefined
+                    ? `${stats.revenueChange > 0 ? "+" : ""}${stats.revenueChange}%`
+                    : "—"}
+                </p>
+                <p className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Vs. mes anterior</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

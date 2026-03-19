@@ -59,6 +59,7 @@ export default function StatCard({
                         </span>
                     </div>
 
+                    {change && (
                     <span
                         className={`flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-lg glass-badge ${trendColor}`}
                     >
@@ -67,6 +68,7 @@ export default function StatCard({
                         </span>
                         {change}
                     </span>
+                    )}
                 </div>
 
                 {/* Value + label */}

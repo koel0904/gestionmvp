@@ -143,12 +143,23 @@ router.put("/locales/:id", authenticateToken, async (req, res) => {
 router.get("/locales/:id/stats", authenticateToken, async (req, res) => {
   try {
     const localId = req.params.id;
-    // Basic authorization check could go here: ensure user has access to localId
     const stats = await localRepository.getLocalStats(localId);
     res.json({ stats });
   } catch (err) {
     console.error("Error fetching local stats:", err);
     res.status(500).json({ error: "Error fetching local stats" });
+  }
+});
+
+// GET /api/locales/:id/analytics - Full analytics data (charts, tops, activity)
+router.get("/locales/:id/analytics", authenticateToken, async (req, res) => {
+  try {
+    const localId = req.params.id;
+    const analytics = await localRepository.getLocalAnalytics(localId);
+    res.json(analytics);
+  } catch (err) {
+    console.error("Error fetching analytics:", err);
+    res.status(500).json({ error: "Error fetching analytics" });
   }
 });
 

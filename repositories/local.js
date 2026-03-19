@@ -23,17 +23,44 @@ class localRepository {
     return userLocales.map((local) => ({ ...local, role: "user" }));
   }
 
-  // Method to get stats for a specific local
+  // Method to get stats for a specific local (with month-over-month trends)
   static async getLocalStats(localId) {
-    const revenueResult = await prisma.ventas.aggregate({
-      where: { localId },
-      _sum: { total: true },
-    });
-    const totalRevenue = revenueResult._sum.total || 0;
+    const now = new Date();
+    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-    const ordersCount = await prisma.ventas.count({
-      where: { localId },
-    });
+    // Revenue & orders: this month vs last month
+    const [revenueThis, revenueLast, ordersThis, ordersLast] =
+      await Promise.all([
+        prisma.ventas.aggregate({
+          where: { localId, fecha: { gte: startOfThisMonth } },
+          _sum: { total: true },
+        }),
+        prisma.ventas.aggregate({
+          where: {
+            localId,
+            fecha: { gte: startOfLastMonth, lt: startOfThisMonth },
+          },
+          _sum: { total: true },
+        }),
+        prisma.ventas.count({
+          where: { localId, fecha: { gte: startOfThisMonth } },
+        }),
+        prisma.ventas.count({
+          where: {
+            localId,
+            fecha: { gte: startOfLastMonth, lt: startOfThisMonth },
+          },
+        }),
+      ]);
+
+    const totalRevenue =
+      (await prisma.ventas.aggregate({
+        where: { localId },
+        _sum: { total: true },
+      }))._sum.total || 0;
+
+    const totalOrders = await prisma.ventas.count({ where: { localId } });
 
     const customersCount = await prisma.clientes.count({
       where: { localId },
@@ -43,11 +70,38 @@ class localRepository {
       where: { localId },
     });
 
+    const lowStockCount = await prisma.inventario.count({
+      where: {
+        localId,
+        stock: { lte: 5 },
+        estado: true,
+      },
+    });
+
+    const pendingTasks = await prisma.tarea.count({
+      where: { localId, status: "Sin realizar" },
+    });
+
+    // Calculate percentage changes
+    const revThisVal = revenueThis._sum.total || 0;
+    const revLastVal = revenueLast._sum.total || 0;
+    const revenueChange = revLastVal > 0
+      ? (((revThisVal - revLastVal) / revLastVal) * 100).toFixed(1)
+      : revThisVal > 0 ? "100.0" : "0.0";
+
+    const ordersChange = ordersLast > 0
+      ? (((ordersThis - ordersLast) / ordersLast) * 100).toFixed(1)
+      : ordersThis > 0 ? "100.0" : "0.0";
+
     return {
       revenue: totalRevenue,
-      orders: ordersCount,
+      revenueChange: parseFloat(revenueChange),
+      orders: totalOrders,
+      ordersChange: parseFloat(ordersChange),
       customers: customersCount,
       products: productsCount,
+      lowStockCount,
+      pendingTasks,
     };
   }
 
@@ -521,6 +575,289 @@ class localRepository {
       where: { id },
       data: { isPinned: !anuncio.isPinned },
     });
+  }
+
+  // Full analytics data for the Analytics page
+  static async getLocalAnalytics(localId) {
+    const now = new Date();
+    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1,
+    );
+
+    // ── KPI stats with trends ──
+    const [revenueThis, revenueLast, ordersThis, ordersLast] =
+      await Promise.all([
+        prisma.ventas.aggregate({
+          where: { localId, fecha: { gte: startOfThisMonth } },
+          _sum: { total: true },
+        }),
+        prisma.ventas.aggregate({
+          where: {
+            localId,
+            fecha: { gte: startOfLastMonth, lt: startOfThisMonth },
+          },
+          _sum: { total: true },
+        }),
+        prisma.ventas.count({
+          where: { localId, fecha: { gte: startOfThisMonth } },
+        }),
+        prisma.ventas.count({
+          where: {
+            localId,
+            fecha: { gte: startOfLastMonth, lt: startOfThisMonth },
+          },
+        }),
+      ]);
+
+    const totalRevenue =
+      (
+        await prisma.ventas.aggregate({
+          where: { localId },
+          _sum: { total: true },
+        })
+      )._sum.total || 0;
+
+    const totalOrders = await prisma.ventas.count({ where: { localId } });
+
+    const customersCount = await prisma.clientes.count({
+      where: { localId },
+    });
+
+    const revThisVal = revenueThis._sum.total || 0;
+    const revLastVal = revenueLast._sum.total || 0;
+
+    const pctChange = (cur, prev) => {
+      if (prev > 0) return parseFloat((((cur - prev) / prev) * 100).toFixed(1));
+      return cur > 0 ? 100.0 : 0.0;
+    };
+
+    const avgOrderValue =
+      totalOrders > 0 ? parseFloat((totalRevenue / totalOrders).toFixed(2)) : 0;
+    // Avg this month vs last month
+    const avgThis =
+      ordersThis > 0 ? revThisVal / ordersThis : 0;
+    const avgLast =
+      ordersLast > 0 ? revLastVal / ordersLast : 0;
+
+    const kpis = {
+      revenue: totalRevenue,
+      revenueChange: pctChange(revThisVal, revLastVal),
+      orders: totalOrders,
+      ordersChange: pctChange(ordersThis, ordersLast),
+      customers: customersCount,
+      avgOrderValue,
+      avgOrderValueChange: pctChange(avgThis, avgLast),
+    };
+
+    // ── Revenue by month (last 6 months) ──
+    const monthLabels = [];
+    const revenueByMonth = [];
+    for (let i = 5; i >= 0; i--) {
+      const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      monthLabels.push(
+        mStart.toLocaleString("en", { month: "short" }),
+      );
+      const agg = await prisma.ventas.aggregate({
+        where: { localId, fecha: { gte: mStart, lt: mEnd } },
+        _sum: { total: true },
+      });
+      revenueByMonth.push(agg._sum.total || 0);
+    }
+
+    // ── Orders by day (last 7 days) ──
+    const dayLabels = [];
+    const ordersByDay = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - i,
+      );
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+      const dayName = dayStart.toLocaleString("en", { weekday: "short" });
+      dayLabels.push(dayName);
+      const count = await prisma.ventas.count({
+        where: { localId, fecha: { gte: dayStart, lt: dayEnd } },
+      });
+      ordersByDay.push(count);
+    }
+
+    // ── Top products (from Ventas JSON items) ──
+    const allVentas = await prisma.ventas.findMany({
+      where: { localId },
+      select: { items: true },
+    });
+
+    const productMap = {};
+    for (const venta of allVentas) {
+      const items = Array.isArray(venta.items) ? venta.items : [];
+      for (const item of items) {
+        const name = item.nombre || "Sin nombre";
+        if (!productMap[name]) {
+          productMap[name] = { sold: 0, revenue: 0 };
+        }
+        productMap[name].sold += parseInt(item.cantidad) || 0;
+        productMap[name].revenue += parseFloat(item.subtotal) || 0;
+      }
+    }
+
+    const topProducts = Object.entries(productMap)
+      .sort((a, b) => b[1].revenue - a[1].revenue)
+      .slice(0, 5)
+      .map(([name, data]) => [
+        name,
+        `${data.sold} uds`,
+        `$${data.revenue.toFixed(2)}`,
+      ]);
+
+    // ── Top customers (by total spent) ──
+    const customerSales = await prisma.ventas.groupBy({
+      by: ["clienteId"],
+      where: { localId, clienteId: { not: null } },
+      _sum: { total: true },
+      _count: { id: true },
+      orderBy: { _sum: { total: "desc" } },
+      take: 5,
+    });
+
+    const customerIds = customerSales.map((cs) => cs.clienteId);
+    const customers =
+      customerIds.length > 0
+        ? await prisma.clientes.findMany({
+            where: { id: { in: customerIds } },
+            select: { id: true, name: true },
+          })
+        : [];
+    const customerNameMap = Object.fromEntries(
+      customers.map((c) => [c.id, c.name]),
+    );
+
+    const topCustomers = customerSales.map((cs) => [
+      customerNameMap[cs.clienteId] || "Desconocido",
+      `${cs._count.id} ventas`,
+      `$${(cs._sum.total || 0).toFixed(2)}`,
+    ]);
+
+    // ── Recent activity feed ──
+    const recentVentas = await prisma.ventas.findMany({
+      where: { localId },
+      include: { cliente: { select: { name: true } } },
+      orderBy: { fecha: "desc" },
+      take: 5,
+    });
+
+    const recentClientes = await prisma.clientes.findMany({
+      where: { localId },
+      orderBy: { id: "desc" },
+      take: 3,
+    });
+
+    const lowStockProducts = await prisma.inventario.findMany({
+      where: { localId, stock: { lte: 5 }, estado: true },
+      select: { name: true, stock: true },
+      take: 3,
+    });
+
+    const activity = [];
+
+    for (const v of recentVentas) {
+      const itemNames = Array.isArray(v.items)
+        ? v.items.map((it) => it.nombre).filter(Boolean).join(", ")
+        : "";
+      activity.push({
+        id: `venta-${v.id}`,
+        icon: "add_shopping_cart",
+        iconColor: "text-emerald-400",
+        iconBg: "bg-emerald-400/10",
+        title: `Venta — $${Number(v.total).toFixed(2)}`,
+        desc: v.cliente?.name
+          ? `Cliente: ${v.cliente.name}${itemNames ? ` — ${itemNames}` : ""}`
+          : itemNames || "Venta registrada",
+        time: v.fecha,
+        badge: "Venta",
+        badgeColor: "glass-badge-orange text-accent-orange",
+      });
+    }
+
+    for (const c of recentClientes) {
+      activity.push({
+        id: `cliente-${c.id}`,
+        icon: "person_add",
+        iconColor: "text-primary-light",
+        iconBg: "bg-primary/10",
+        title: "Nuevo cliente registrado",
+        desc: `${c.name} se unió a la plataforma`,
+        time: c.id, // no createdAt on clientes, use as fallback
+        badge: "Nuevo",
+        badgeColor: "glass-badge-purple text-primary-light",
+      });
+    }
+
+    for (const p of lowStockProducts) {
+      activity.push({
+        id: `lowstock-${p.name}`,
+        icon: "inventory",
+        iconColor: "text-accent-orange",
+        iconBg: "bg-accent-orange/10",
+        title: "Stock bajo",
+        desc: `Producto: ${p.name} — ${p.stock} restantes`,
+        time: new Date().toISOString(),
+        badge: "Alerta",
+        badgeColor:
+          "bg-red-500/20 border border-red-400/20 text-red-400",
+      });
+    }
+
+    // Sort activity: ventas have real dates, put them first
+    activity.sort((a, b) => {
+      const dateA = new Date(a.time);
+      const dateB = new Date(b.time);
+      if (!isNaN(dateA) && !isNaN(dateB)) return dateB - dateA;
+      return 0;
+    });
+
+    // Format time to relative strings
+    const formatRelativeTime = (dateStr) => {
+      const date = new Date(dateStr);
+      if (isNaN(date)) return "";
+      const diffMs = now - date;
+      const diffMin = Math.floor(diffMs / 60000);
+      if (diffMin < 1) return "Justo ahora";
+      if (diffMin < 60) return `Hace ${diffMin} min`;
+      const diffHours = Math.floor(diffMin / 60);
+      if (diffHours < 24) return `Hace ${diffHours}h`;
+      const diffDays = Math.floor(diffHours / 24);
+      if (diffDays === 1) return "Ayer";
+      if (diffDays < 7) return `Hace ${diffDays} días`;
+      return date.toLocaleDateString("es");
+    };
+
+    const formattedActivity = activity.slice(0, 8).map((a, i) => ({
+      ...a,
+      id: i + 1,
+      time: formatRelativeTime(a.time),
+    }));
+
+    return {
+      kpis,
+      revenueChart: monthLabels.map((label, i) => ({
+        label,
+        value: revenueByMonth[i],
+      })),
+      ordersChart: dayLabels.map((label, i) => ({
+        label,
+        value: ordersByDay[i],
+      })),
+      topProducts,
+      topCustomers,
+      activity: formattedActivity,
+    };
   }
 }
 
