@@ -744,25 +744,39 @@ class localRepository {
       `$${(cs._sum.total || 0).toFixed(2)}`,
     ]);
 
-    // ── Recent activity feed ──
-    const recentVentas = await prisma.ventas.findMany({
-      where: { localId },
-      include: { cliente: { select: { name: true } } },
-      orderBy: { fecha: "desc" },
-      take: 5,
-    });
-
-    const recentClientes = await prisma.clientes.findMany({
-      where: { localId },
-      orderBy: { id: "desc" },
-      take: 3,
-    });
-
-    const lowStockProducts = await prisma.inventario.findMany({
-      where: { localId, stock: { lte: 5 }, estado: true },
-      select: { name: true, stock: true },
-      take: 3,
-    });
+    // ── Recent activity feed (all timestamped sources) ──
+    const [recentVentas, recentTareas, recentUsers, recentAnuncios, lowStockProducts] =
+      await Promise.all([
+        prisma.ventas.findMany({
+          where: { localId },
+          include: { cliente: { select: { name: true } } },
+          orderBy: { fecha: "desc" },
+          take: 10,
+        }),
+        prisma.tarea.findMany({
+          where: { localId },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+          select: { id: true, title: true, status: true, createdAt: true },
+        }),
+        prisma.user.findMany({
+          where: { localId },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { id: true, name: true, createdAt: true },
+        }),
+        prisma.anuncio.findMany({
+          where: { localId },
+          orderBy: { fecha: "desc" },
+          take: 5,
+          select: { id: true, content: true, type: true, fecha: true },
+        }),
+        prisma.inventario.findMany({
+          where: { localId, stock: { lte: 5 }, estado: true },
+          select: { name: true, stock: true },
+          take: 5,
+        }),
+      ]);
 
     const activity = [];
 
@@ -771,7 +785,6 @@ class localRepository {
         ? v.items.map((it) => it.nombre).filter(Boolean).join(", ")
         : "";
       activity.push({
-        id: `venta-${v.id}`,
         icon: "add_shopping_cart",
         iconColor: "text-emerald-400",
         iconBg: "bg-emerald-400/10",
@@ -779,69 +792,100 @@ class localRepository {
         desc: v.cliente?.name
           ? `Cliente: ${v.cliente.name}${itemNames ? ` — ${itemNames}` : ""}`
           : itemNames || "Venta registrada",
-        time: v.fecha,
+        timestamp: v.fecha.toISOString(),
         badge: "Venta",
         badgeColor: "glass-badge-orange text-accent-orange",
       });
     }
 
-    for (const c of recentClientes) {
+    for (const t of recentTareas) {
+      const statusIcon =
+        t.status === "Realizada"
+          ? "check_circle"
+          : t.status === "En proceso"
+            ? "pending"
+            : t.status === "No se pudo completar"
+              ? "cancel"
+              : "task_alt";
+      const statusColor =
+        t.status === "Realizada"
+          ? "text-emerald-400"
+          : t.status === "En proceso"
+            ? "text-amber-400"
+            : t.status === "No se pudo completar"
+              ? "text-red-400"
+              : "text-blue-400";
       activity.push({
-        id: `cliente-${c.id}`,
-        icon: "person_add",
-        iconColor: "text-primary-light",
-        iconBg: "bg-primary/10",
-        title: "Nuevo cliente registrado",
-        desc: `${c.name} se unió a la plataforma`,
-        time: c.id, // no createdAt on clientes, use as fallback
-        badge: "Nuevo",
+        icon: statusIcon,
+        iconColor: statusColor,
+        iconBg:
+          t.status === "Realizada"
+            ? "bg-emerald-400/10"
+            : t.status === "En proceso"
+              ? "bg-amber-400/10"
+              : t.status === "No se pudo completar"
+                ? "bg-red-400/10"
+                : "bg-blue-400/10",
+        title: `Tarea: ${t.title}`,
+        desc: `Estado: ${t.status}`,
+        timestamp: t.createdAt.toISOString(),
+        badge: "Tarea",
         badgeColor: "glass-badge-purple text-primary-light",
       });
     }
 
-    for (const p of lowStockProducts) {
+    for (const u of recentUsers) {
       activity.push({
-        id: `lowstock-${p.name}`,
-        icon: "inventory",
-        iconColor: "text-accent-orange",
-        iconBg: "bg-accent-orange/10",
-        title: "Stock bajo",
-        desc: `Producto: ${p.name} — ${p.stock} restantes`,
-        time: new Date().toISOString(),
-        badge: "Alerta",
-        badgeColor:
-          "bg-red-500/20 border border-red-400/20 text-red-400",
+        icon: "person_add",
+        iconColor: "text-primary-light",
+        iconBg: "bg-primary/10",
+        title: "Nuevo empleado registrado",
+        desc: u.name,
+        timestamp: u.createdAt.toISOString(),
+        badge: "Equipo",
+        badgeColor: "glass-badge-purple text-primary-light",
       });
     }
 
-    // Sort activity: ventas have real dates, put them first
-    activity.sort((a, b) => {
-      const dateA = new Date(a.time);
-      const dateB = new Date(b.time);
-      if (!isNaN(dateA) && !isNaN(dateB)) return dateB - dateA;
-      return 0;
-    });
+    for (const a of recentAnuncios) {
+      activity.push({
+        icon: "campaign",
+        iconColor: "text-amber-400",
+        iconBg: "bg-amber-400/10",
+        title: "Anuncio publicado",
+        desc:
+          a.content.length > 60
+            ? a.content.substring(0, 60) + "..."
+            : a.content,
+        timestamp: a.fecha.toISOString(),
+        badge: "Foro",
+        badgeColor: "bg-amber-500/20 border border-amber-400/20 text-amber-400",
+      });
+    }
 
-    // Format time to relative strings
-    const formatRelativeTime = (dateStr) => {
-      const date = new Date(dateStr);
-      if (isNaN(date)) return "";
-      const diffMs = now - date;
-      const diffMin = Math.floor(diffMs / 60000);
-      if (diffMin < 1) return "Justo ahora";
-      if (diffMin < 60) return `Hace ${diffMin} min`;
-      const diffHours = Math.floor(diffMin / 60);
-      if (diffHours < 24) return `Hace ${diffHours}h`;
-      const diffDays = Math.floor(diffHours / 24);
-      if (diffDays === 1) return "Ayer";
-      if (diffDays < 7) return `Hace ${diffDays} días`;
-      return date.toLocaleDateString("es");
-    };
+    // Low stock alerts (pinned to now - they're current state, not events)
+    for (const p of lowStockProducts) {
+      activity.push({
+        icon: "inventory",
+        iconColor: "text-red-400",
+        iconBg: "bg-red-400/10",
+        title: "Stock bajo",
+        desc: `${p.name} — ${p.stock} restantes`,
+        timestamp: now.toISOString(),
+        badge: "Alerta",
+        badgeColor: "bg-red-500/20 border border-red-400/20 text-red-400",
+      });
+    }
 
-    const formattedActivity = activity.slice(0, 8).map((a, i) => ({
-      ...a,
+    // Sort all by timestamp descending
+    activity.sort(
+      (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
+    );
+
+    // Assign sequential IDs and keep only latest 15
+    const trimmedActivity = activity.slice(0, 15).map((ev, i) => ({
+      ...ev,
       id: i + 1,
-      time: formatRelativeTime(a.time),
     }));
 
     return {
@@ -856,7 +900,7 @@ class localRepository {
       })),
       topProducts,
       topCustomers,
-      activity: formattedActivity,
+      activity: trimmedActivity,
     };
   }
 }
