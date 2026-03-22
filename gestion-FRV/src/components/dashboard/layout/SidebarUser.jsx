@@ -6,6 +6,7 @@ export default function SidebarUser({ sidebarOpen, user }) {
             <div
                 className={`glass-subtle rounded-xl flex items-center h-16 box-border transition-all duration-300 overflow-hidden ${sidebarOpen ? "w-full" : "w-16 justify-center"
                     }`}
+                title={!sidebarOpen ? user?.name || "User" : undefined}
             >
                 <div className="w-16 h-16 flex items-center justify-center shrink-0">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/40 to-accent-orange/30 border border-white/20 flex items-center justify-center text-white/90 shadow-inner group-hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all duration-300">
@@ -16,8 +17,8 @@ export default function SidebarUser({ sidebarOpen, user }) {
                 </div>
                 <div
                     className={`transition-all duration-300 ease-in-out flex flex-col justify-center overflow-hidden ${sidebarOpen
-                            ? "max-w-[180px] opacity-100"
-                            : "max-w-0 opacity-0"
+                        ? "max-w-[180px] opacity-100"
+                        : "max-w-0 opacity-0"
                         }`}
                 >
                     <div className="w-[180px] pl-1 pr-3 text-left">
