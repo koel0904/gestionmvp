@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLocal } from "../context/LocalContext";
@@ -28,8 +28,36 @@ const sidebarLinks = [
   { name: "Settings", icon: "settings", path: "/dashboard/settings" },
 ];
 
+const NAV_ORDER_KEY = "sidebar-nav-order";
+const SIDEBAR_OPEN_KEY = "sidebar-is-open";
+
+function readSavedOrder() {
+  try {
+    const raw = localStorage.getItem(NAV_ORDER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function readSidebarState() {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_OPEN_KEY);
+    // Request specifically asked to show only icons, setting default to false
+    return raw !== null ? JSON.parse(raw) : false;
+  } catch {
+    return false;
+  }
+}
+
 export default function DashboardLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarState] = useState(() => readSidebarState());
+  const [navOrder, setNavOrder] = useState(() => readSavedOrder());
+
+  const setSidebarOpen = (isOpen) => {
+    setSidebarState(isOpen);
+    localStorage.setItem(SIDEBAR_OPEN_KEY, JSON.stringify(isOpen));
+  };
   const { user, logout } = useAuth();
   const { selectedLocal, changeLocal, userLocales } = useLocal();
   const location = useLocation();
@@ -68,22 +96,48 @@ export default function DashboardLayout() {
     return links;
   };
 
-  const dynamicLinks = getSidebarLinks();
+  // Sort by saved order (if any)
+  const dynamicLinks = (() => {
+    const filtered = getSidebarLinks();
+    if (!navOrder) return filtered;
+    const orderMap = new Map(navOrder.map((path, i) => [path, i]));
+    return [...filtered].sort((a, b) => {
+      const ia = orderMap.has(a.path) ? orderMap.get(a.path) : Infinity;
+      const ib = orderMap.has(b.path) ? orderMap.get(b.path) : Infinity;
+      return ia - ib;
+    });
+  })();
+
+  const handleReorder = useCallback((reorderedLinks) => {
+    const newOrder = reorderedLinks.map((l) => l.path);
+    setNavOrder(newOrder);
+    localStorage.setItem(NAV_ORDER_KEY, JSON.stringify(newOrder));
+  }, []);
 
   const currentViewName =
     dynamicLinks.find((l) => l.path === location.pathname)?.name || "Dashboard";
 
   return (
     <div className="h-screen font-display text-white flex p-4 gap-4 relative overflow-hidden">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* ══════════════════════════════════════ */}
       {/* SIDEBAR                              */}
       {/* ══════════════════════════════════════ */}
       <aside
-        className={`relative z-40 flex flex-col shrink-0 transition-all duration-300 ease-in-out h-full ${
-          sidebarOpen ? "w-[260px]" : "w-[80px]"
-        }`}
+        className={`fixed md:relative top-4 left-4 md:top-0 md:left-0 z-50 md:z-40 flex flex-col shrink-0 transition-all duration-300 ease-in-out h-[calc(100vh-2rem)] md:h-full
+          ${sidebarOpen
+            ? "translate-x-0 w-[260px]"
+            : "-translate-x-[150%] md:translate-x-0 w-[80px]"
+          }`}
       >
-        <div className="flex flex-col h-full rounded-2xl overflow-hidden glass-heavy shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative">
+        <div className="flex flex-col h-full rounded-2xl glass-heavy shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative">
           <SidebarLogo sidebarOpen={sidebarOpen} />
 
           <LocalSelector
@@ -97,6 +151,7 @@ export default function DashboardLayout() {
             sidebarOpen={sidebarOpen}
             dynamicLinks={dynamicLinks}
             location={location}
+            onReorder={handleReorder}
           />
 
           <SidebarUser sidebarOpen={sidebarOpen} user={user} />

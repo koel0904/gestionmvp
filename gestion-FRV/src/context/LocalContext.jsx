@@ -3,6 +3,8 @@ import { createContext, useContext, useState, useEffect } from "react";
 
 const LocalContext = createContext(null);
 
+const SELECTED_LOCAL_KEY = "selected-local";
+
 export function LocalProvider({ children }) {
   const [selectedLocal, setSelectedLocal] = useState(null);
   const [userLocales, setUserLocales] = useState([]);
@@ -17,10 +19,19 @@ export function LocalProvider({ children }) {
         });
         if (res.ok) {
           const data = await res.json();
-          setUserLocales(data.locales || []);
+          const locales = data.locales || [];
+          setUserLocales(locales);
 
-          // If they already selected one previously (could save to localStorage), set it
-          // For now, we leave it null so they hit the LocalsGrid
+          // Restore previously selected local from localStorage
+          try {
+            const savedId = localStorage.getItem(SELECTED_LOCAL_KEY);
+            if (savedId) {
+              const match = locales.find((l) => String(l.id) === savedId);
+              if (match) setSelectedLocal(match);
+            }
+          } catch (e) {
+            console.error("Failed to restore selected local", e);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch locales", err);
@@ -31,9 +42,18 @@ export function LocalProvider({ children }) {
     fetchLocales();
   }, []);
 
-  // Helper function to change local
+  // Helper function to change local (persists to localStorage)
   const changeLocal = (local) => {
     setSelectedLocal(local);
+    try {
+      if (local?.id) {
+        localStorage.setItem(SELECTED_LOCAL_KEY, String(local.id));
+      } else {
+        localStorage.removeItem(SELECTED_LOCAL_KEY);
+      }
+    } catch (e) {
+      console.error("Failed to save selected local", e);
+    }
   };
 
   return (
